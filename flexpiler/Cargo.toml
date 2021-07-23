@@ -3,6 +3,8 @@ name = "flexpiler"
 version = "0.1.0"
 authors = ["Erlan Dumah <erlan.dumah@yahoo.com>"]
 edition = "2018"
+description = "Deserialiser aiming at high customizability"
+license = "MIT"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
