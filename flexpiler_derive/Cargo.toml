@@ -3,6 +3,8 @@ name = "flexpiler_derive"
 version = "0.1.0"
 authors = ["Erlan Dumah <erlan.dumah@yahoo.com>"]
 edition = "2018"
+description = "Derive macro project for main crate 'flexpiler'"
+license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
