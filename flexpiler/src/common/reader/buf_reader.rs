@@ -27,6 +27,13 @@ impl BufReader {
     }
 }
 
+
+impl From<std::io::BufReader<File>> for BufReader {
+    fn from(std_buf_reader: std::io::BufReader<File>) -> Self {
+        return Self::from_buf_reader(std_buf_reader);
+    }
+}
+
 impl reader::Trait for BufReader {
     fn read(&mut self) -> reader::Result {
         use std::io::Read;

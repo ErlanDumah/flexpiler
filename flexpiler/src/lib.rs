@@ -1,3 +1,35 @@
+//! # Flexpiler
+//!
+//! A library that aims to maximize customisation of serialization.
+//!
+//! Most notably this library provides the derive macro ```flexpiler::Deserialize``` as well as some common
+//! implementations in the ```flexpiler::common``` namespace.
+//!
+//! Currently the project only supports deserialization of a format that mirrors how structs and enums
+//! are initialized in the rust language.
+//!
+//! # examples
+//!
+//! ```
+//! #[derive(flexpiler::Deserialize)]
+//! struct Example {
+//!   field_i32: i32,
+//! }
+//!
+//! let mut string_reader = flexpiler::common::reader::String::from("Example{ field_i32: 5 }");
+//!
+//! let example = match Example::deserialize(&mut string_reader) {
+//!     Ok(example) => example,
+//!     Err(error) => {
+//!         assert!(false, "deserialisation failed: {}", error);
+//!     }
+//! };
+//!
+//! assert_eq!(example.field_i32, 5);
+//! ```
+//!
+
+
 pub mod block;
 pub mod common;
 pub mod deserializer;
@@ -35,6 +67,11 @@ where DataType: Deserialization<FormatType>,
         }
     }
 }
+
+
+#[macro_use]
+extern crate flexpiler_derive;
+pub use flexpiler_derive::*;
 
 
 #[cfg(test)]
