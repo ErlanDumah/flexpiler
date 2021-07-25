@@ -126,7 +126,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                                         value.context
                                     }
                                     Err(error) => {
-                                        let error = error.propagate(#struct_deserializer_intermediary_ident_ref::context_entry_general(#struct_intermediary_field_string_vec_ref));
+                                        let error = error.propagate(#struct_deserializer_intermediary_ident_ref::context_field(#struct_intermediary_field_string_vec_ref));
                                         return Err(error);
                                     }
                                 }
@@ -159,7 +159,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                                     },
                                     Err(parser_error) => {
                                         let error = flexpiler::error::Error::gen(parser_error)
-                                            .propagate(#struct_deserializer_intermediary_ident_ref::context_entry_general(field_declaration_string.as_str()));
+                                            .propagate(#struct_deserializer_intermediary_ident_ref::context_field(field_declaration_string.as_str()));
                                         return Err(error);
                                     },
                                 }
