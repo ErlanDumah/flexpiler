@@ -22,6 +22,9 @@ enum Context {
 
 #[derive(Clone)]
 pub enum Finish {
+    // Block may be successfully parsed even if the end of data is reached
+    NoContext,
+
     Freestanding,
     Separator,
     ArgumentData,
@@ -46,6 +49,7 @@ pub struct IdentifierWithVariableFinish {
 impl Into<crate::common::rustc::deserializer::Context> for Finish {
     fn into(self) -> crate::common::rustc::deserializer::Context {
         return match self {
+            Finish::NoContext => crate::common::rustc::deserializer::Context::Freestanding,
             Finish::Freestanding => crate::common::rustc::deserializer::Context::Freestanding,
             Finish::Separator => crate::common::rustc::deserializer::Context::Separator,
             Finish::ArgumentData => crate::common::rustc::deserializer::Context::ArgumentStart,
@@ -58,6 +62,9 @@ impl Into<crate::common::rustc::deserializer::Context> for Finish {
 impl std::fmt::Display for Finish {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
+            &Finish::NoContext => {
+                write!(f, "NoContext")
+            },
             &Finish::Freestanding => {
                 write!(f, "Freestanding")
             },
@@ -196,9 +203,11 @@ impl block::Trait for IdentifierWithVariableFinish {
         let data_type = match self.context {
             Context::Initial
             | Context::InitialComment
-            | Context::IdentifierString
             | Context::Error => {
                 return Err(self.error);
+            },
+            Context::IdentifierString => {
+                Finish::NoContext
             },
             Context::FinishedWithFreestanding => {
                 Finish::Freestanding

@@ -2,7 +2,7 @@
 
 #[derive(PartialEq)]
 pub enum Context {
-    Freestanding,   // Block was ended by a ' ', '\t' or '\n'
+    Freestanding,   // Block was ended by a ' ', '\t', '\n' or the end of the reader
     Separator,      // Block ended with a ','
     ArgumentStart,  // Block ended with a '('
     ArgumentEnd,    // Block ended with a ')'
