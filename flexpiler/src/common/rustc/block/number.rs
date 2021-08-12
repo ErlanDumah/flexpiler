@@ -3,6 +3,7 @@ use super::constants::*;
 use crate::block;
 use crate::parser::error;
 use crate::reader;
+use crate::common::rustc::block::number::Context::FinishFreestanding;
 
 
 enum Context {
@@ -22,6 +23,8 @@ enum Context {
 
 
 pub enum Finish {
+    NoContext,
+
     Freestanding,
     ArgumentEnd,
     DataEnd,
@@ -45,6 +48,7 @@ pub struct Number {
 impl Into<crate::common::rustc::deserializer::Context> for Finish {
     fn into(self) -> crate::common::rustc::deserializer::Context {
         return match self {
+            Finish::NoContext => crate::common::rustc::deserializer::Context::Freestanding,
             Finish::Freestanding => crate::common::rustc::deserializer::Context::Freestanding,
             Finish::ArgumentEnd => crate::common::rustc::deserializer::Context::ArgumentEnd,
             Finish::DataEnd => crate::common::rustc::deserializer::Context::DataEnd,
@@ -169,9 +173,14 @@ impl block::Trait for Number {
         match self.context {
             Context::Initial
             | Context::Comment
-            | Context::Number
             | Context::Error => {
                 return Err(self.error);
+            },
+            Context::Number => {
+                return Ok(Result {
+                    finish: Finish::NoContext,
+                    string: self.string,
+                })
             },
             Context::FinishFreestanding => {
                 return Ok(Result {
