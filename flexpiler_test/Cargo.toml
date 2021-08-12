@@ -1,0 +1,14 @@
+[package]
+name = "flexpiler_test"
+version = "0.1.0"
+authors = ["Erlan Dumah <erlan.dumah@yahoo.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+flexpiler = { path = "../flexpiler" }
+#flexpiler_derive = { path = "../flexpiler_derive" }
+#flexpiler = "0.1.0"
+#flexpiler_derive = "0.1.0"
+
