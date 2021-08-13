@@ -126,3 +126,157 @@ fn string_positive_max_formatting() {
 
     assert_eq!(test_string.as_str(), "baka", "result was expected to be \"baka\" but was {}", test_string);
 }
+
+
+#[test]
+fn option_some_string_min_formatting() {
+    use flexpiler::Deserialize;
+    use flexpiler::common::reader;
+
+    let mut reader = reader::String::from(
+        "Some(\"baka\")"
+    );
+
+    let test_option: std::option::Option<std::string::String> = match std::option::Option::deserialize(&mut reader) {
+        Ok(value) => value,
+        Err(error) => {
+            assert!(false, "no_data_deserialization_successful() test ended in a failed deserialization:\n{}", error);
+            return;
+        }
+    };
+
+    match test_option {
+        Some(string) => {
+            assert_eq!(string.as_str(), "baka");
+        }
+        _ => assert!(false, "Result was not a \"Some\" entry."),
+    }
+}
+
+
+#[test]
+fn option_some_string_max_formatting() {
+    use flexpiler::Deserialize;
+    use flexpiler::common::reader;
+
+    let mut reader = reader::String::from(
+        " \t\nSome \t\n( \t\n\"baka\" \t\n) \t\n"
+    );
+
+    let test_option: std::option::Option<std::string::String> = match std::option::Option::deserialize(&mut reader) {
+        Ok(value) => value,
+        Err(error) => {
+            assert!(false, "no_data_deserialization_successful() test ended in a failed deserialization:\n{}", error);
+            return;
+        }
+    };
+
+    match test_option {
+        Some(string) => {
+            assert_eq!(string.as_str(), "baka");
+        }
+        _ => assert!(false, "Result was not a \"Some\" entry."),
+    }
+}
+
+
+#[test]
+fn option_none_string_min_formatting() {
+    use flexpiler::Deserialize;
+    use flexpiler::common::reader;
+
+    let mut reader = reader::String::from(
+        "None"
+    );
+
+    let test_option: std::option::Option<std::string::String> = match std::option::Option::deserialize(&mut reader) {
+        Ok(value) => value,
+        Err(error) => {
+            assert!(false, "no_data_deserialization_successful() test ended in a failed deserialization:\n{}", error);
+            return;
+        }
+    };
+
+    match test_option {
+        None => {
+        }
+        _ => assert!(false, "Result was not a \"None\" entry."),
+    }
+}
+
+
+#[test]
+fn option_none_string_max_formatting() {
+    use flexpiler::Deserialize;
+    use flexpiler::common::reader;
+
+    let mut reader = reader::String::from(
+        " \t\nNone \t\n"
+    );
+
+    let test_option: std::option::Option<std::string::String> = match std::option::Option::deserialize(&mut reader) {
+        Ok(value) => value,
+        Err(error) => {
+            assert!(false, "no_data_deserialization_successful() test ended in a failed deserialization:\n{}", error);
+            return;
+        }
+    };
+
+    match test_option {
+        None => {
+        }
+        _ => assert!(false, "Result was not a \"None\" entry."),
+    }
+}
+
+
+#[test]
+fn option_some_i32_min_formatting() {
+    use flexpiler::Deserialize;
+    use flexpiler::common::reader;
+
+    let mut reader = reader::String::from(
+        "Some(5)"
+    );
+
+    let test_option: std::option::Option<i32> = match std::option::Option::deserialize(&mut reader) {
+        Ok(value) => value,
+        Err(error) => {
+            assert!(false, "no_data_deserialization_successful() test ended in a failed deserialization:\n{}", error);
+            return;
+        }
+    };
+
+    match test_option {
+        Some(value) => {
+            assert_eq!(value, 5);
+        }
+        _ => assert!(false, "Result was not a \"Some\" entry."),
+    }
+}
+
+
+#[test]
+fn option_some_i32_max_formatting() {
+    use flexpiler::Deserialize;
+    use flexpiler::common::reader;
+
+    let mut reader = reader::String::from(
+        " \t\nSome \t\n( \t\n5 \t\n) \t\n"
+    );
+
+    let test_option: std::option::Option<i32> = match std::option::Option::deserialize(&mut reader) {
+        Ok(value) => value,
+        Err(error) => {
+            assert!(false, "no_data_deserialization_successful() test ended in a failed deserialization:\n{}", error);
+            return;
+        }
+    };
+
+    match test_option {
+        Some(value) => {
+            assert_eq!(value, 5);
+        }
+        _ => assert!(false, "Result was not a \"Some\" entry."),
+    }
+}
