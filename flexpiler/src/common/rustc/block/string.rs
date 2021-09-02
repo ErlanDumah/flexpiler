@@ -38,7 +38,7 @@ pub struct Result {
 
 
 pub struct String {
-    error: error::Error,
+    error_source: error::Source,
     context: Context,
     string: std::string::String,
 }
@@ -59,9 +59,7 @@ impl Into<crate::common::rustc::deserializer::Context> for Finish {
 impl String {
     pub fn new() -> String {
         String {
-            error: error::Error {
-                error_source: error::Source::NoContent,
-            },
+            error_source: error::Source::NoContent,
             context: Context::Initial,
             string: std::string::String::new(),
         }
@@ -116,7 +114,7 @@ impl block::Trait for String {
             
             (&Context::Initial,
                 _) => {
-                self.error.error_source = error::Source::UnexpectedToken(error::UnexpectedToken{
+                self.error_source = error::Source::UnexpectedToken(error::UnexpectedToken{
                     token_expected_entries: ExpectedEntries::from(vec![DENOMINATOR_STRING as char]),
                     token_found: read_byte as char,
                 });
@@ -197,14 +195,14 @@ impl block::Trait for String {
         }
     }
 
-    fn into_result(self) -> std::result::Result<Result, error::Error> {
+    fn into_result(self) -> std::result::Result<Result, error::Source> {
         match self.context {
             Context::Initial
             | Context::Comment
             | Context::StringFreestanding
             | Context::StringDenominated
             | Context::Error => {
-                return Err(self.error);
+                return Err(self.error_source);
             },
             Context::FinishFreestanding => {
                 return Ok(Result {

@@ -22,12 +22,14 @@ fn context() -> error::Context {
 
 impl crate::deserializer::Trait<
     i32,
-    crate::common::rustc::deserializer::Context
+    crate::common::rustc::deserializer::Context,
+    crate::common::rustc::error::Source
 > for PrimitiveI32 {
     fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
-        -> std::result::Result<crate::deserializer::Result<i32, crate::common::rustc::deserializer::Context>, Error>
+        -> crate::deserializer::Result<i32, crate::common::rustc::deserializer::Context, crate::Error<crate::common::rustc::error::Source>>
     where ReaderType: crate::reader::Trait {
-        use crate::error::Trait;
+        use crate::error::Trait as ErrorTrait;
+        use crate::error::propagation::Trait as PropagationTrait;
         use crate::parser::Parse;
         use std::str::FromStr;
 
@@ -35,7 +37,7 @@ impl crate::deserializer::Trait<
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
                     .propagate(context());
-                return Err(error);
+                return crate::deserializer::Result::Err(error);
             },
             Ok(parser_result) => parser_result,
         };
@@ -44,18 +46,16 @@ impl crate::deserializer::Trait<
             Err(parse_int_error) => {
                 let error = error::Error::gen(parse_int_error)
                     .propagate(context());
-                return Err(error);
+                return crate::deserializer::Result::Err(error);
             },
             Ok(value) => value,
         };
         let context: crate::common::rustc::deserializer::Context = parse_number_result.finish.into();
 
-        let result = crate::deserializer::Result {
+        return crate::deserializer::Result::DataFound {
             data,
             context,
         };
-
-        return Ok(result);
     }
 }
 

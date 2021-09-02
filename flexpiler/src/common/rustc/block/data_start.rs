@@ -19,7 +19,7 @@ pub struct Result {
 
 pub struct DataStart {
     context: DataStartContext,
-    error: error::Error,
+    error_source: error::Source,
 }
 
 
@@ -27,9 +27,7 @@ impl DataStart {
     pub fn new() -> DataStart {
         DataStart {
             context: DataStartContext::Initial,
-            error: error::Error {
-                error_source: error::Source::NoContent,
-            },
+            error_source: error::Source::NoContent,
         }
     }
 }
@@ -76,14 +74,12 @@ impl block::Trait for DataStart {
             // Change deserializer to string and add read_byte as first character
             (&DataStartContext::Initial,
                 _) => {
-                self.error = error::Error {
-                    error_source: error::Source::UnexpectedToken(
-                        error::UnexpectedToken{
-                            token_expected_entries: ExpectedEntries::from(vec![DENOMINATOR_DATA_START as char]),
-                            token_found: read_byte as char,
-                        }
-                    ),
-                };
+                self.error_source = error::Source::UnexpectedToken(
+                    error::UnexpectedToken{
+                        token_expected_entries: ExpectedEntries::from(vec![DENOMINATOR_DATA_START as char]),
+                        token_found: read_byte as char,
+                    }
+                );
                 self.context = DataStartContext::Error;
                 return block::AdvanceResult::Error;
             },
@@ -113,12 +109,12 @@ impl block::Trait for DataStart {
         }
     }
 
-    fn into_result(self) -> std::result::Result<Result, error::Error> {
+    fn into_result(self) -> std::result::Result<Result, error::Source> {
         match self.context {
             DataStartContext::Initial
             | DataStartContext::Comment
             | DataStartContext::Error => {
-                return Err(self.error);
+                return Err(self.error_source);
             }
             DataStartContext::Finished => {
                 return Ok(Result {});

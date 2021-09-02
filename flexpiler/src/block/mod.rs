@@ -18,7 +18,7 @@ pub trait Trait: Default {
     type Result;
 
     fn advance_result(&mut self, read_byte: u8) -> AdvanceResult;
-    fn into_result(self) -> Result<Self::Result, error::Error>;
+    fn into_result(self) -> Result<Self::Result, error::Source>;
 }
 
 
@@ -27,7 +27,7 @@ where BlockType: Trait + Default {
     type Result = <Self as Trait>::Result;
 
     fn parse<ReaderType>(reader_mut_ref: &mut ReaderType)
-        -> std::result::Result<Self::Result, crate::parser::Error>
+        -> std::result::Result<Self::Result, crate::parser::error::Source>
     where ReaderType: crate::reader::Trait {
         crate::parser::parse::<
             Self,

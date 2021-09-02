@@ -1,6 +1,6 @@
 [package]
 name = "flexpiler"
-version = "0.1.1"
+version = "0.2.0"
 authors = ["Erlan Dumah <erlan.dumah@yahoo.com>"]
 edition = "2018"
 description = "Deserialiser aiming at high customizability"

@@ -39,7 +39,7 @@ pub struct Result {
 
 
 pub struct Number {
-    error: error::Error,
+    error_source: error::Source,
     context: Context,
     string: std::string::String,
 }
@@ -61,9 +61,7 @@ impl Into<crate::common::rustc::deserializer::Context> for Finish {
 impl Number {
     pub fn new() -> Number {
         Number {
-            error: error::Error {
-                error_source: error::Source::NoContent,
-            },
+            error_source: error::Source::NoContent,
             context: Context::Initial,
             string: std::string::String::new(),
         }
@@ -169,12 +167,12 @@ impl block::Trait for Number {
         }
     }
 
-    fn into_result(self) -> std::result::Result<Result, error::Error> {
+    fn into_result(self) -> std::result::Result<Result, error::Source> {
         match self.context {
             Context::Initial
             | Context::Comment
             | Context::Error => {
-                return Err(self.error);
+                return Err(self.error_source);
             },
             Context::Number => {
                 return Ok(Result {

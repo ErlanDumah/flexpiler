@@ -21,7 +21,7 @@ enum DeclarationOrDataEndContext {
 
 
 pub struct DeclarationOrDataEnd {
-    error: error::Error,
+    error_source: error::Source,
     context: DeclarationOrDataEndContext,
     string: std::string::String,
 }
@@ -37,9 +37,7 @@ pub enum Result {
 impl DeclarationOrDataEnd {
     pub fn new() -> DeclarationOrDataEnd {
         DeclarationOrDataEnd {
-            error: error::Error {
-                error_source: error::Source::NoContent,
-            },
+            error_source: error::Source::NoContent,
             context: DeclarationOrDataEndContext::Initial,
             string: std::string::String::new(),
         }
@@ -80,9 +78,7 @@ impl block::Trait for DeclarationOrDataEnd {
             // Throw error for not allowed empty declaration
             (&DeclarationOrDataEndContext::Initial,
                 DENOMINATOR_DECLARATION) => {
-                self.error = error::Error {
-                    error_source: error::Source::UnexpectedDeclarationEmpty,
-                };
+                self.error_source = error::Source::UnexpectedDeclarationEmpty;
                 self.context = DeclarationOrDataEndContext::Error;
                 return block::AdvanceResult::Error;
             },
@@ -123,9 +119,7 @@ impl block::Trait for DeclarationOrDataEnd {
                 DENOMINATOR_NEW_LINE)
             | (&DeclarationOrDataEndContext::String,
                 DENOMINATOR_TAB) => {
-                self.error = error::Error {
-                    error_source: error::Source::IllegalDeclarationTokenFormat,
-                };
+                self.error_source = error::Source::IllegalDeclarationTokenFormat;
                 return block::AdvanceResult::Error;
             },
 
@@ -161,13 +155,13 @@ impl block::Trait for DeclarationOrDataEnd {
         }
     }
 
-    fn into_result(self) -> std::result::Result<Result, error::Error> {
+    fn into_result(self) -> std::result::Result<Result, error::Source> {
         match self.context {
             DeclarationOrDataEndContext::Initial
             | DeclarationOrDataEndContext::Comment
             | DeclarationOrDataEndContext::String
             | DeclarationOrDataEndContext::Error => {
-                return Err(self.error);
+                return Err(self.error_source);
             }
             DeclarationOrDataEndContext::DataEndFinished => {
                 return Ok(Result::DataEnd())

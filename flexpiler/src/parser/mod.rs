@@ -1,5 +1,4 @@
 pub mod error;
-pub use error::Error;
 
 use crate::block;
 use crate::reader;
@@ -10,7 +9,7 @@ pub trait Parse {
     type Result;
 
     fn parse<ReaderType>(reader_mut_ref: &mut ReaderType)
-        -> std::result::Result<Self::Result, crate::parser::Error>
+        -> std::result::Result<Self::Result, error::Source>
     where ReaderType: crate::reader::Trait;
 }
 
@@ -19,7 +18,7 @@ pub fn parse<
     BlockType,
     ReaderType
 > (reader_mut_ref: &mut ReaderType)
-   -> Result<BlockType::Result, Error>
+   -> Result<BlockType::Result, error::Source>
 where BlockType: block::Trait + Default,
       ReaderType: reader::Trait
 {

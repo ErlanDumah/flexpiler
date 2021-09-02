@@ -36,18 +36,32 @@ pub mod deserializer;
 pub use error::Error;
 pub mod error;
 pub mod format;
+pub mod identity;
 pub mod parser;
 pub mod reader;
 
 
+///
+/// A trait that associates a type with its flexpiler Deseriaizer type
+///
+/// The flexpiler_derive macro will generate a custom Deserializer type and then
+/// impl this trait for your type, associating it with the auto-generated deserializer type.
+///
 pub trait Deserialization<FormatType: crate::format::Trait>: Sized {
-    type Deserializer: crate::deserializer::Trait<Self, FormatType::DeserializerContext>;
+    type Deserializer: crate::deserializer::Trait<Self, FormatType::DeserializerContext, FormatType::ErrorSource>;
 }
 
 
-pub trait Deserialize<FormatType>: Sized {
+///
+/// A trait that makes a type support the flexpiler deserialize(reader) function.
+///
+/// It is recommended to not manually impl this trait for a type and instead opt
+/// to impl flexpiler::Deserialization and move the deserialization into a type that
+/// has an impl for flexpiler::deserializer::Trait.
+///
+pub trait Deserialize<FormatType: crate::format::Trait>: Sized {
     fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
-        -> Result<Self, error::Error>
+        -> Result<Self, error::Error<FormatType::ErrorSource>>
     where ReaderType: reader::Trait;
 }
 
@@ -55,15 +69,33 @@ pub trait Deserialize<FormatType>: Sized {
 impl<DataType, FormatType> Deserialize<FormatType> for DataType
 where DataType: Deserialization<FormatType>,
       FormatType: crate::format::Trait,
+      DataType::Deserializer: crate::deserializer::identity::Trait<DataType, FormatType>
+                              + crate::deserializer::context::Trait<DataType, FormatType>,
+      FormatType::ErrorSource: crate::error::source::Trait
 {
-    fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType) -> Result<Self, Error> where ReaderType: reader::Trait {
-        use deserializer::Trait;
+    fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType) -> Result<Self, error::Error<FormatType::ErrorSource>> where ReaderType: reader::Trait {
+        use error::Trait as ErrorTrait;
+        use error::propagation::Trait as PropagationTrait;
+        use deserializer::Trait as DeserializerTrait;
+        use deserializer::context::Trait as ContextTrait;
+        use deserializer::identity::Trait as IdentityTrait;
 
         return match DataType::Deserializer::deserialize(reader_mut_ref) {
-            Ok(deserializer_result) => {
-                Ok(deserializer_result.data)
+            crate::deserializer::Result::DataFound{ data, .. } => {
+                Ok(data)
             },
-            Err(error) => Err(error),
+            crate::deserializer::Result::NoDataFound { .. } => {
+                let unexpected_no_content = crate::error::source::common::UnexpectedNoContent {
+                    definition_expected: <DataType::Deserializer as crate::deserializer::identity::Trait<DataType, FormatType>>::data_definition(),
+                };
+
+                let common_error_source = <crate::error::source::common::UnexpectedNoContent as Into<crate::error::source::Common>>::into(unexpected_no_content);
+                let error = Error::gen(common_error_source)
+                    .propagate(<DataType::Deserializer as crate::deserializer::context::Trait<DataType, FormatType>>::context_general());
+
+                Err(error)
+            }
+            crate::deserializer::Result::Err(error) => Err(error),
         }
     }
 }
@@ -72,6 +104,7 @@ where DataType: Deserialization<FormatType>,
 #[macro_use]
 extern crate flexpiler_derive;
 pub use flexpiler_derive::*;
+use crate::error::Trait;
 
 
 #[cfg(test)]

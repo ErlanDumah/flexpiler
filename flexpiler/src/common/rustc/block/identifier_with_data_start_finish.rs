@@ -24,7 +24,7 @@ pub enum Result {
 
 
 pub struct IdentifierWithDataStartFinish {
-    error: error::Error,
+    error_source: error::Source,
     context: Context,
     string: std::string::String,
 }
@@ -33,9 +33,7 @@ pub struct IdentifierWithDataStartFinish {
 impl IdentifierWithDataStartFinish {
     pub fn new() -> IdentifierWithDataStartFinish {
         IdentifierWithDataStartFinish {
-            error: error::Error {
-                error_source: error::Source::NoContent,
-            },
+            error_source: error::Source::NoContent,
             context: Context::Initial,
             string: std::string::String::new(),
         }
@@ -134,13 +132,13 @@ impl block::Trait for IdentifierWithDataStartFinish {
         }
     }
 
-    fn into_result(self) -> std::result::Result<Result, error::Error> {
+    fn into_result(self) -> std::result::Result<Result, error::Source> {
         match self.context {
             Context::Initial
             | Context::Comment
             | Context::String
             | Context::Error => {
-                return Err(self.error);
+                return Err(self.error_source);
             },
             Context::FinishedFreestanding => {
                 return Ok(Result::Freestanding(self.string))

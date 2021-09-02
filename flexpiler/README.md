@@ -52,15 +52,15 @@ fn basic() {
 
 ## Current limitations
 
-Updated last: version ``0.1.1``
+Updated last: version ``0.1.2``
 
 The project does not support as many standard types as I'd like. In particular ```Option<DataType>```, ```Result<DataType>```, ```Vec<DataType>``` and various primitive types are on the menu to be implemented by me for now.
-
-The parser is still fidgety and may struggle to parse data when it is not formatted in a human-readable way. More tests are to come to rectify this in the future.
 
 Flexpiler currently uses a custom ```flexpiler::reader::Trait``` implementation for its parsing, and expects the user to convert their filereader or stringreader or other types of readers into a type that implements it. The project should instead contain various common implementations and possibly support implicit conversion from common practice types such as ```BufReader```.
 
 rust unions are not supported as of now.
+
+The project cannot handle generics as of yet.
 
 
 ## Plans for the future

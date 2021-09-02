@@ -13,6 +13,8 @@ pub const DENOMINATOR_ARGUMENT_START: u8 = '(' as u8;
 pub const DENOMINATOR_ARGUMENT_END: u8 = ')' as u8;
 pub const DENOMINATOR_DATA_START: u8 = '{' as u8;
 pub const DENOMINATOR_DATA_END: u8 = '}' as u8;
+pub const DENOMINATOR_LIST_START: u8 = '[' as u8;
+pub const DENOMINATOR_LIST_END: u8 = ']' as u8;
 
 pub const DENOMINATOR_CHAR: u8 = '\'' as u8;
 pub const DENOMINATOR_STRING: u8 = '"' as u8;

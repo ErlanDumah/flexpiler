@@ -8,6 +8,8 @@ pub enum Context {
     ArgumentEnd,    // Block ended with a ')'
     DataStart,      // Block ended with a '{'
     DataEnd,        // Block ended with a '}'
+    ListStart,      // Block ended with a '['
+    ListEnd,        // Block ended with a ']'
 }
 
 
@@ -31,6 +33,12 @@ impl std::fmt::Display for Context {
             },
             Context::DataEnd => {
                 write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_DATA_END)
+            },
+            Context::ListStart => {
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_LIST_START)
+            },
+            Context::ListEnd => {
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_LIST_END)
             },
         }
     }

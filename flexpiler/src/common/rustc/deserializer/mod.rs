@@ -10,3 +10,5 @@ pub mod result;
 pub use result::Result;
 pub mod string;
 pub use string::String;
+pub mod vec;
+pub use vec::Vec;
