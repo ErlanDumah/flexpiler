@@ -15,6 +15,16 @@ impl<'a> implementation::TryTrait<&'a definition::Struct> for Flexpiler {
         use std::convert::TryFrom;
         use implementation::Trait;
 
+        let struct_intermediary = match intermediary::Struct::try_from(struct_definition_ref) {
+            Ok(struct_intermediary) => struct_intermediary,
+            Err(error) => return Err(error),
+        };
+        // Identity trait implementation for our type, which provides error contexts with its name etc
+        let struct_impl_identity_trait_code = implementation::identity::TraitImpl::gen(implementation::identity::trait_impl::ParameterStruct{
+            definition_struct_ref: &struct_definition_ref,
+            intermediary_struct_ref: &struct_intermediary,
+        });
+
         // Intermediary class holding Option<Data> fields during deserialization
         let struct_data_context_intermediary = match intermediary::DataContext::try_from(struct_definition_ref) {
             Ok(struct_data_context_intermediary) => struct_data_context_intermediary,
@@ -22,10 +32,6 @@ impl<'a> implementation::TryTrait<&'a definition::Struct> for Flexpiler {
         };
         // Struct definition to implement flexpiler::Deserialization on
         let struct_deserializer_intermediary = intermediary::deserializer::Struct::from(struct_definition_ref);
-        let struct_intermediary = match intermediary::Struct::try_from(struct_definition_ref) {
-            Ok(struct_intermediary) => struct_intermediary,
-            Err(error) => return Err(error),
-        };
 
         let data_context_code = implementation::DataContext::gen(&struct_data_context_intermediary);
         let data_context_impl_default_code = implementation::data_context::DefaultImpl::gen(&struct_data_context_intermediary);
@@ -37,10 +43,6 @@ impl<'a> implementation::TryTrait<&'a definition::Struct> for Flexpiler {
         });
 
         let deserializer_code = implementation::Deserializer::gen(&struct_deserializer_intermediary);
-        let deserializer_impl_error_context_code = implementation::deserializer::ErrorContext::gen(implementation::deserializer::error_context::ParameterStruct {
-            struct_intermediary_ref: &struct_intermediary,
-            struct_deserializer_intermediary_ref: &struct_deserializer_intermediary,
-        });
         let deserializer_impl_deserializer_trait_code = implementation::deserializer::DeserializerTraitImpl::gen(implementation::deserializer::deserializer_trait_impl::ParameterStruct {
             struct_definition_ref,
             struct_intermediary_ref: &struct_intermediary,
@@ -54,6 +56,8 @@ impl<'a> implementation::TryTrait<&'a definition::Struct> for Flexpiler {
         });
 
         Ok(quote!{
+            #struct_impl_identity_trait_code
+
             #data_context_code
 
             #deserializer_code
@@ -61,8 +65,6 @@ impl<'a> implementation::TryTrait<&'a definition::Struct> for Flexpiler {
             #data_context_impl_default_code
 
             #data_context_impl_tryinto_result_code
-
-            #deserializer_impl_error_context_code
 
             #deserializer_impl_deserializer_trait_code
 
@@ -83,6 +85,11 @@ impl<'a> implementation::TryTrait<&'a definition::Enum> for Flexpiler {
             Ok(enum_intermediary) => enum_intermediary,
             Err(error) => return Err(error),
         };
+        // Identity trait implementation for our type, which provides error contexts with its name etc
+        let enum_impl_identity_trait_code = implementation::identity::TraitImpl::gen(implementation::identity::trait_impl::ParameterEnum{
+            definition_enum_ref: enum_definition_ref,
+            intermediary_enum_ref: &enum_intermediary,
+        });
         let enum_variant_complex_data_context_vec = {
             let mut vec = Vec::new();
             //let variant_complex_ref_iter: std::slice::Iter<'a, > = enum_intermediary.variant_complex_vec.iter();
@@ -116,10 +123,6 @@ impl<'a> implementation::TryTrait<&'a definition::Enum> for Flexpiler {
             }
             vec
         };
-        let deserializer_impl_error_context_code = implementation::deserializer::ErrorContext::gen(implementation::deserializer::error_context::ParameterEnum{
-            enum_intermediary_ref: &enum_intermediary,
-            enum_deserializer_intermediary_ref: &enum_deserializer_intermediary,
-        });
         let enum_data_context_impl_tryinto_result_code_vec = {
             let mut vec = Vec::new();
             for (enum_variant_complex_intermediary_ref, data_context_intermediary_ref) in enum_intermediary.variant_complex_vec.iter()
@@ -146,13 +149,13 @@ impl<'a> implementation::TryTrait<&'a definition::Enum> for Flexpiler {
         });
 
         Ok(quote!{
+            #enum_impl_identity_trait_code
+
             #deserializer_code
 
             #(#enum_data_context_code_vec)*
 
             #(#enum_data_context_default_code_vec)*
-
-            #deserializer_impl_error_context_code
 
             #(#enum_data_context_impl_tryinto_result_code_vec)*
 

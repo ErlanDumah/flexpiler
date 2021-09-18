@@ -18,8 +18,7 @@ impl<DataType> crate::identity::Trait for std::vec::Vec<DataType>
 
 impl<DataType> crate::deserializer::Trait<
     std::vec::Vec<DataType>,
-    crate::common::rustc::deserializer::Context,
-    crate::common::rustc::error::Source
+    crate::common::rustc::Format
 > for Vec
 where DataType: crate::Deserialization<crate::common::rustc::Format>
                 + crate::identity::Trait
@@ -38,7 +37,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
         match block::ContextDenominator::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
-                    .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context_general());
+                    .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
                 return crate::deserializer::Result::Err(error);
             }
             Ok(result) => {
@@ -53,7 +52,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
                             ]),
                         };
                         let error = error::Error::gen(unexpected_context)
-                            .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context_general());
+                            .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
                         return crate::deserializer::Result::Err(error);
                     }
                 }
@@ -73,7 +72,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
                     context
                 },
                 crate::deserializer::Result::Err(error) => {
-                    let error = error.propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context_general());
+                    let error = error.propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
                     return crate::deserializer::Result::Err(error);
                 },
             };
@@ -83,7 +82,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
                     Ok(result) => result,
                     Err(parser_error) => {
                         let error = crate::Error::gen(parser_error)
-                            .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context_general());
+                            .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
                         return crate::deserializer::Result::Err(error);
                     }
                 };
@@ -107,7 +106,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
                     };
 
                     let error = crate::Error::gen(unexpected_context)
-                        .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context_general());
+                        .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
                     return crate::deserializer::Result::Err(error);
                 },
             }

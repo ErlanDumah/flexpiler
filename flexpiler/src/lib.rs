@@ -48,7 +48,7 @@ pub mod reader;
 /// impl this trait for your type, associating it with the auto-generated deserializer type.
 ///
 pub trait Deserialization<FormatType: crate::format::Trait>: Sized {
-    type Deserializer: crate::deserializer::Trait<Self, FormatType::DeserializerContext, FormatType::ErrorSource>;
+    type Deserializer: crate::deserializer::Trait<Self, FormatType>;
 }
 
 
@@ -91,7 +91,7 @@ where DataType: Deserialization<FormatType>,
 
                 let common_error_source = <crate::error::source::common::UnexpectedNoContent as Into<crate::error::source::Common>>::into(unexpected_no_content);
                 let error = Error::gen(common_error_source)
-                    .propagate(<DataType::Deserializer as crate::deserializer::context::Trait<DataType, FormatType>>::context_general());
+                    .propagate(<DataType::Deserializer as crate::deserializer::context::Trait<DataType, FormatType>>::context());
 
                 Err(error)
             }

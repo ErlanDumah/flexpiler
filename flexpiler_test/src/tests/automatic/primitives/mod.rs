@@ -1,46 +1,46 @@
+mod vec;
 
 
 struct PrimitivesCollection {
 
-    a_bool: bool,
+    //a_bool: bool,
 
-    a_i8: i8,
-    a_i16: i16,
+    //a_i8: i8,
+    //a_i16: i16,
     a_i32: i32,
-    a_i64: i64,
-    a_i128: i128,
-    a_isize: isize,
+    //a_i64: i64,
+    //a_i128: i128,
+    //a_isize: isize,
 
-    a_u8: u8,
-    a_u16: u16,
-    a_u32: u32,
-    a_u64: u64,
-    a_u128: u128,
+    //a_u8: u8,
+    //a_u16: u16,
+    //a_u32: u32,
+    //a_u64: u64,
+    //a_u128: u128,
     a_usize: usize,
 
-    a_char: char,
+    //a_char: char,
 
-    a_f32: f32,
-    a_f64: f64,
+    //a_f32: f32,
+    //a_f64: f64,
 
-    a_unit_type: (),
+    //a_unit_type: (),
 
     a_string: std::string::String,
 
     a_option: std::option::Option<i32>,
     a_result: std::result::Result<i32, i32>,
 
-    a_array: [i32; 5],
+    //a_array: [i32; 5],
 
     a_vec: std::vec::Vec<i32>,
-    a_vec_deque: std::collections::VecDeque<i32>,
-    a_linked_list: std::collections::LinkedList<i32>,
+    //a_vec_deque: std::collections::VecDeque<i32>,
+    //a_linked_list: std::collections::LinkedList<i32>,
     a_hashmap: std::collections::HashMap<i32, i32>,
-    a_hashset: std::collections::HashSet<i32>,
-    a_btree_map: std::collections::BTreeMap<i32, i32>,
-    a_btree_set: std::collections::BTreeSet<i32>,
-    a_binary_heap: std::collections::BinaryHeap<i32>,
-
+    //a_hashset: std::collections::HashSet<i32>,
+    //a_btree_map: std::collections::BTreeMap<i32, i32>,
+    //a_btree_set: std::collections::BTreeSet<i32>,
+    //a_binary_heap: std::collections::BinaryHeap<i32>,
 }
 
 

@@ -12,7 +12,7 @@ pub trait Trait<DataType, FormatType> {
 impl<DataType, DeserializerType, FormatType> Trait<DataType, FormatType> for DeserializerType
 where DataType: crate::identity::Trait,
       FormatType: crate::format::Trait,
-      DeserializerType: crate::deserializer::Trait<DataType, FormatType::DeserializerContext, FormatType::ErrorSource> {
+      DeserializerType: crate::deserializer::Trait<DataType, FormatType> {
     fn data_definition() -> String {
         return <DataType as crate::identity::Trait>::definition();
     }

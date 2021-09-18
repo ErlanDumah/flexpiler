@@ -35,9 +35,10 @@ pub enum Result<DataType, ContextType, ErrorType> {
 /// A deserializer type also has to impl context::Trait to account for common errors constructed
 /// from outside like a flexpiler::error::Common::UnexpectedNoContent
 ///
-pub trait Trait<DataType, ContextType, ErrorSourceType> {
+pub trait Trait<DataType, FormatType>
+where FormatType: crate::format::Trait {
     fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
-        -> Result<DataType, ContextType, crate::Error<ErrorSourceType>>
+        -> Result<DataType, FormatType::DeserializerContext, crate::Error<FormatType::ErrorSource>>
     where ReaderType: crate::reader::Trait;
 }
 

@@ -11,19 +11,16 @@ use crate::format::Trait;
 pub struct PrimitiveI32;
 
 
-fn context() -> error::Context {
-    use std::str::FromStr;
-
-    error::Context {
-        trace: String::from("i32"),
+impl crate::identity::Trait for i32 {
+    fn definition() -> std::string::String {
+        return std::string::String::from("i32");
     }
 }
 
 
 impl crate::deserializer::Trait<
     i32,
-    crate::common::rustc::deserializer::Context,
-    crate::common::rustc::error::Source
+    crate::common::rustc::Format
 > for PrimitiveI32 {
     fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
         -> crate::deserializer::Result<i32, crate::common::rustc::deserializer::Context, crate::Error<crate::common::rustc::error::Source>>
@@ -36,7 +33,7 @@ impl crate::deserializer::Trait<
         let parse_number_result = match block::Number::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
-                    .propagate(context());
+                    .propagate(<Self as crate::deserializer::context::Trait<i32, crate::common::rustc::Format>>::context());
                 return crate::deserializer::Result::Err(error);
             },
             Ok(parser_result) => parser_result,
@@ -45,7 +42,7 @@ impl crate::deserializer::Trait<
         let data = match i32::from_str(parse_number_result.string.as_str()) {
             Err(parse_int_error) => {
                 let error = error::Error::gen(parse_int_error)
-                    .propagate(context());
+                    .propagate(<Self as crate::deserializer::context::Trait<i32, crate::common::rustc::Format>>::context());
                 return crate::deserializer::Result::Err(error);
             },
             Ok(value) => value,

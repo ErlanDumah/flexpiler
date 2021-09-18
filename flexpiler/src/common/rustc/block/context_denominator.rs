@@ -119,18 +119,18 @@ impl block::Trait for ContextDenominator {
                 return block::AdvanceResult::Finished;
             },
             (&Context::Initial,
-                DENOMINATOR_ARGUMENT_START) => {
-                self.context = Context::FinishedArgumentStart;
+                DENOMINATOR_LIST_START) => {
+                self.context = Context::FinishedListStart;
                 return block::AdvanceResult::Finished;
             },
             (&Context::Initial,
-                DENOMINATOR_ARGUMENT_START) => {
-                self.context = Context::FinishedArgumentStart;
+                DENOMINATOR_LIST_END) => {
+                self.context = Context::FinishedListEnd;
                 return block::AdvanceResult::Finished;
             },
             (&Context::Initial,
-                DENOMINATOR_ARGUMENT_START) => {
-                self.context = Context::FinishedArgumentStart;
+                DENOMINATOR_SEPARATOR) => {
+                self.context = Context::FinishedSeparator;
                 return block::AdvanceResult::Finished;
             },
 
@@ -140,7 +140,15 @@ impl block::Trait for ContextDenominator {
                 _) => {
                 self.error_source = error::Source::UnexpectedToken(
                     error::UnexpectedToken{
-                        token_expected_entries: ExpectedEntries::from(vec![DENOMINATOR_DATA_START as char]),
+                        token_expected_entries: ExpectedEntries::from(vec![
+                            DENOMINATOR_DATA_START as char,
+                            DENOMINATOR_DATA_END as char,
+                            DENOMINATOR_ARGUMENT_START as char,
+                            DENOMINATOR_ARGUMENT_END as char,
+                            DENOMINATOR_LIST_START as char,
+                            DENOMINATOR_LIST_END as char,
+                            DENOMINATOR_SEPARATOR as char,
+                        ]),
                         token_found: read_byte as char,
                     }
                 );

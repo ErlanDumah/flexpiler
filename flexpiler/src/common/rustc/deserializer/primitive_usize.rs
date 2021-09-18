@@ -20,8 +20,7 @@ impl crate::identity::Trait for usize {
 
 impl crate::deserializer::Trait<
     usize,
-    crate::common::rustc::deserializer::Context,
-    crate::common::rustc::error::Source
+    crate::common::rustc::Format
 > for PrimitiveUSize {
     fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
         -> crate::deserializer::Result<usize, crate::common::rustc::deserializer::Context, crate::Error<crate::common::rustc::error::Source>>
@@ -34,7 +33,7 @@ impl crate::deserializer::Trait<
         let parse_number_result = match block::Number::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
-                    .propagate(<Self as crate::deserializer::context::Trait<usize, crate::common::rustc::Format>>::context_general());
+                    .propagate(<Self as crate::deserializer::context::Trait<usize, crate::common::rustc::Format>>::context());
                 return crate::deserializer::Result::Err(error);
             },
             Ok(parser_result) => parser_result,
@@ -43,7 +42,7 @@ impl crate::deserializer::Trait<
         let data = match usize::from_str(parse_number_result.string.as_str()) {
             Err(parse_int_error) => {
                 let error = error::Error::gen(parse_int_error)
-                    .propagate(<Self as crate::deserializer::context::Trait<usize, crate::common::rustc::Format>>::context_general());
+                    .propagate(<Self as crate::deserializer::context::Trait<usize, crate::common::rustc::Format>>::context());
                 return crate::deserializer::Result::Err(error);
             },
             Ok(value) => value,

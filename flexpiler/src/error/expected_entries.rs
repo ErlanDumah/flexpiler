@@ -32,6 +32,7 @@ where EntryType: std::fmt::Display{
             representation.push_str(", ");
             representation.push_str(format!("{}", entry_ref).as_str());
         }
+        representation.push_str("}");
         write!(f, "{}", representation)
     }
 }

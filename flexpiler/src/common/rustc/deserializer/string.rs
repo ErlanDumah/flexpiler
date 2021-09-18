@@ -26,8 +26,7 @@ impl crate::identity::Trait for std::string::String {
 
 impl crate::deserializer::Trait<
     std::string::String,
-    crate::common::rustc::deserializer::Context,
-    crate::common::rustc::error::Source
+    crate::common::rustc::Format
 > for String {
     fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
         -> crate::deserializer::Result<std::string::String, crate::common::rustc::deserializer::Context, crate::Error<crate::common::rustc::error::Source>>

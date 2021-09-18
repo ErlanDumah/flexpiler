@@ -1,5 +1,3 @@
-pub mod error_context;
-pub use error_context::ErrorContext;
 pub mod deserializer_trait_impl;
 pub use deserializer_trait_impl::DeserializerTraitImpl;
 use crate::core::implementation;

@@ -5,12 +5,14 @@ use std::env::var;
 
 pub struct VariantStandalone<'a> {
     pub ident_ref: &'a syn::Ident,
+    pub ident_string: std::string::String,
     pub full_ident_tokenstream: proc_macro2::TokenStream,
     pub full_ident_string: std::string::String,
 }
 
 pub struct VariantArgumented<'a> {
     pub ident_ref: &'a syn::Ident,
+    pub ident_string: std::string::String,
     pub full_ident_tokenstream: proc_macro2::TokenStream,
     pub full_ident_string: std::string::String,
     pub field_type_ref_vec: Vec<&'a syn::Type>,
@@ -18,6 +20,7 @@ pub struct VariantArgumented<'a> {
 
 pub struct VariantComplex<'a> {
     pub ident_ref: &'a syn::Ident,
+    pub ident_string: std::string::String,
     pub full_ident_tokenstream: proc_macro2::TokenStream,
     pub full_ident_string: std::string::String,
     pub field_ident_ref_vec: Vec<&'a syn::Ident>,
@@ -45,6 +48,7 @@ impl<'a> std::convert::TryFrom<&'a definition::Enum> for Enum<'a> {
 
         for variant_ref in enum_definition_ref.data_enum.variants.iter() {
             let ident_ref = &variant_ref.ident;
+            let ident_string = format!("{}", variant_ref.ident);
             let enum_definition_ident_ref = &enum_definition_ref.ident;
             let variant_ident_ref = &variant_ref.ident;
             let full_ident_tokenstream = quote!(#enum_definition_ident_ref::#variant_ident_ref);
@@ -56,6 +60,7 @@ impl<'a> std::convert::TryFrom<&'a definition::Enum> for Enum<'a> {
                 &syn::Fields::Unit => {
                     variant_standalone_vec.push(VariantStandalone{
                         ident_ref,
+                        ident_string,
                         full_ident_tokenstream,
                         full_ident_string,
                     });
@@ -68,6 +73,7 @@ impl<'a> std::convert::TryFrom<&'a definition::Enum> for Enum<'a> {
 
                     variant_argumented_vec.push(VariantArgumented{
                         ident_ref,
+                        ident_string,
                         full_ident_tokenstream,
                         full_ident_string,
                         field_type_ref_vec,
@@ -94,6 +100,7 @@ impl<'a> std::convert::TryFrom<&'a definition::Enum> for Enum<'a> {
 
                     variant_complex_vec.push(VariantComplex{
                         ident_ref,
+                        ident_string,
                         full_ident_tokenstream,
                         full_ident_string,
                         field_ident_ref_vec,
