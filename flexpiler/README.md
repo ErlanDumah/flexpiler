@@ -52,9 +52,9 @@ fn basic() {
 
 ## Current limitations
 
-Updated last: version ``0.1.2``
+Updated last: version ``0.2.0``
 
-The project does not support as many standard types as I'd like. In particular ```Option<DataType>```, ```Result<DataType>```, ```Vec<DataType>``` and various primitive types are on the menu to be implemented by me for now.
+The project does not support as many standard types as I'd like. In particular ```HashMap<KeyType, DataType>``` and various primitive types are on the menu to be implemented by me for now.
 
 Flexpiler currently uses a custom ```flexpiler::reader::Trait``` implementation for its parsing, and expects the user to convert their filereader or stringreader or other types of readers into a type that implements it. The project should instead contain various common implementations and possibly support implicit conversion from common practice types such as ```BufReader```.
 

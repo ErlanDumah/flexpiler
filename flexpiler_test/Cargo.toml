@@ -8,7 +8,4 @@ edition = "2018"
 
 [dependencies]
 flexpiler = { path = "../flexpiler" }
-#flexpiler_derive = { path = "../flexpiler_derive" }
-#flexpiler = "0.1.0"
-#flexpiler_derive = "0.1.0"
 

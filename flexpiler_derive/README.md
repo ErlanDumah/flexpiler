@@ -18,21 +18,26 @@ struct MyPoint {
 
 ## Example output of the crate
 
-Last updated: version ```0.1.1```
+Last updated: version ```0.2.0```
 
 For above example, the crate generates the following code:
 
 ```
-pub struct MyPointflexpilerContext
-{ 
-    x_option : Option < i32 >, 
+impl flexpiler :: identity :: Trait for MyPoint {
+    fn definition() -> String
+    { return std :: string :: String :: from("MyPoint") ; }
+}
+ 
+ 
+pub struct MyPointflexpilerContext{
+    x_option : Option < i32 >,
     y_option : Option < i32 >, 
 } 
 
 
-pub struct MyPointflexpilerDeserializer ; 
-
-
+pub struct MyPointflexpilerDeserializer ;
+ 
+ 
 impl Default for MyPointflexpilerContext
 {
     fn default() -> Self {
@@ -46,109 +51,139 @@ impl Default for MyPointflexpilerContext
 
 impl std :: convert :: TryInto < MyPoint > for MyPointflexpilerContext
 {
-    type Error = flexpiler :: Error ; fn try_into(self) -> std :: result ::
-    Result < MyPoint, flexpiler :: Error >
+    type Error = flexpiler :: Error < flexpiler :: common :: rustc :: error ::
+    Source > ; fn try_into(self) -> std :: result :: Result < MyPoint, Self ::
+    Error >
     {
-        use flexpiler :: error :: Trait as ErrorTrait ; let x = match self .
-        x_option
+        use flexpiler :: deserializer :: Trait as DeserializerTrait ; use
+        flexpiler :: deserializer :: context :: Trait as
+        DeserializerContextTrait ; use flexpiler :: error :: Trait as
+        ErrorTrait ; use flexpiler :: error :: propagation :: Trait as
+        ErrorPropagationTrait ; let x = match self . x_option
         {
             Some(value) => value, None =>
             {
-                let missing_struct_field = flexpiler :: error ::
-                MissingStructField
+                let missing_struct_field = flexpiler :: common :: rustc ::
+                error :: MissingStructField
                 {
                     struct_declaration_found : std :: string :: String ::
                     from("MyPoint"), field_declaration_expected : std ::
                     string :: String :: from("x"),
                 } ; let error = flexpiler :: Error ::
                 gen(missing_struct_field) .
-                propagate(MyPointflexpilerDeserializer :: context_general()) ;
-                return Err(error) ;
+                propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                          deserializer :: context :: Trait < MyPoint,
+                          flexpiler :: common :: rustc :: Format >> ::
+                          context()) ; return Err(error) ;
             }
         } ; let y = match self . y_option
         {
             Some(value) => value, None =>
             {
-                let missing_struct_field = flexpiler :: error ::
-                MissingStructField
+                let missing_struct_field = flexpiler :: common :: rustc ::
+                error :: MissingStructField
                 {
                     struct_declaration_found : std :: string :: String ::
                     from("MyPoint"), field_declaration_expected : std ::
                     string :: String :: from("y"),
                 } ; let error = flexpiler :: Error ::
                 gen(missing_struct_field) .
-                propagate(MyPointflexpilerDeserializer :: context_general()) ;
-                return Err(error) ;
+                propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                          deserializer :: context :: Trait < MyPoint,
+                          flexpiler :: common :: rustc :: Format >> ::
+                          context()) ; return Err(error) ;
             }
         } ; Ok(MyPoint { x, y, })
     }
-} 
-
-
-impl MyPointflexpilerDeserializer {
-    fn context_field(field_name : & str) -> flexpiler :: error :: Context
-    {
-        let mut trace = std :: string :: String :: from("MyPoint") ; trace .
-        push_str("[") ; trace . push_str(field_name) ; trace . push_str("]") ;
-        flexpiler :: error :: Context { trace, }
-    } fn context_general() -> flexpiler :: error :: Context
-    {
-        flexpiler :: error :: Context
-        { trace : std :: string :: String :: from("MyPoint"), }
-    }
-} 
-
-
-impl flexpiler :: deserializer :: Trait < MyPoint, flexpiler :: common ::
-rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
+} impl flexpiler :: deserializer :: Trait < MyPoint, flexpiler :: common ::
+rustc :: Format, > for MyPointflexpilerDeserializer where i32 : flexpiler ::
+Deserialization < flexpiler :: common :: rustc :: Format >, i32 : flexpiler ::
+Deserialization < flexpiler :: common :: rustc :: Format >,
 {
-    fn deserialize < ReaderType > (reader_mut_ref : & mut ReaderType) -> std
-    :: result :: Result < flexpiler :: deserializer :: Result < MyPoint,
-    flexpiler :: common :: rustc :: deserializer :: Context >, flexpiler ::
-    Error > where ReaderType : flexpiler :: reader :: Trait
+    fn deserialize < ReaderType > (reader_mut_ref : & mut ReaderType) ->
+    flexpiler :: deserializer :: Result < MyPoint, flexpiler :: common ::
+    rustc :: deserializer :: Context, flexpiler :: Error < flexpiler :: common
+    :: rustc :: error :: Source > > where ReaderType : flexpiler :: reader ::
+    Trait
     {
-        use std :: convert :: TryInto ; use flexpiler :: Deserialization ; use
-        flexpiler :: deserializer :: Trait as DeserializerTrait ; use
-        flexpiler :: error :: Trait as ErrorTrait ; use flexpiler :: parser ::
-        Parse ; let struct_declaration_string = match flexpiler :: common ::
-        rustc :: block :: IdentifierWithDataStartFinish ::
+        use flexpiler :: deserializer :: Trait as DeserializerTrait ; use
+        flexpiler :: deserializer :: context :: Trait as
+        DeserializerContextTrait ; use flexpiler :: error :: Trait as
+        ErrorTrait ; use flexpiler :: error :: propagation :: Trait as
+        ErrorPropagationTrait ; use flexpiler :: identity :: Trait ; use
+        flexpiler :: parser :: Parse ; let(identifier_data, identifier_finish)
+        = match flexpiler :: common :: rustc :: block :: Identifier ::
         parse(reader_mut_ref)
         {
+            Ok(flexpiler :: common :: rustc :: block :: identifier :: Result
+               :: NoDataFound { finish }) =>
+            {
+                return flexpiler :: deserializer :: Result :: NoDataFound
+                { context : finish . into() } ;
+            },
+            Ok(flexpiler :: common :: rustc :: block :: identifier :: Result
+               :: DataFound { data, finish }) => { (data, finish) },
             Err(parser_error) =>
             {
                 let error = flexpiler :: Error :: gen(parser_error) .
-                propagate(MyPointflexpilerDeserializer :: context_general()) ;
-                return Err(error) ;
-            },
-            Ok(flexpiler :: common :: rustc :: block ::
-               identifier_with_data_start_finish :: Result ::
-               DataStartFinish(declaration)) => { declaration },
-            Ok(flexpiler :: common :: rustc :: block ::
-               identifier_with_data_start_finish :: Result ::
-               Freestanding(declaration)) =>
-            {
-                match flexpiler :: common :: rustc :: block :: DataStart ::
-                parse(reader_mut_ref)
-                {
-                    Err(parser_error) =>
-                    {
-                        let error = flexpiler :: Error :: gen(parser_error) .
-                        propagate(MyPointflexpilerDeserializer ::
-                                  context_general()) ; return Err(error) ;
-                    }, Ok(_) => { },
-                } declaration
-            },
-        } ; if struct_declaration_string . as_str() != "MyPoint"
+                propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                          deserializer :: context :: Trait < MyPoint,
+                          flexpiler :: common :: rustc :: Format >> ::
+                          context()) ; return flexpiler :: deserializer ::
+                Result :: Err(error) ;
+            }
+        } ; let mut context : flexpiler :: common :: rustc :: deserializer ::
+        Context = identifier_finish . into() ; if context == flexpiler ::
+        common :: rustc :: deserializer :: Context :: Freestanding
         {
-            let incompatible_struct_declaration = flexpiler :: error ::
-            IncompatibleStructDeclaration
+            context = match flexpiler :: common :: rustc :: block ::
+            ContextDenominator :: parse(reader_mut_ref)
+            {
+                Ok(result) => { result . finish . into() }, Err(parser_error)
+                =>
+                {
+                    let error = flexpiler :: Error :: gen(parser_error) .
+                    propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                              deserializer :: context :: Trait < MyPoint,
+                              flexpiler :: common :: rustc :: Format >> ::
+                              context()) ; return flexpiler :: deserializer ::
+                    Result :: Err(error) ;
+                },
+            }
+        } match context
+        {
+            flexpiler :: common :: rustc :: deserializer :: Context ::
+            DataStart => { }, _ =>
+            {
+                let unexpected_context = flexpiler :: common :: rustc :: error
+                :: UnexpectedContext
+                {
+                    context_found : context, context_expected : flexpiler ::
+                    error :: ExpectedEntries ::
+                    from(vec !
+                         [flexpiler :: common :: rustc :: deserializer ::
+                          Context :: DataStart,]),
+                } ; let error = flexpiler :: Error :: gen(unexpected_context)
+                .
+                propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                          deserializer :: context :: Trait < MyPoint,
+                          flexpiler :: common :: rustc :: Format >> ::
+                          context()) ; return flexpiler :: deserializer ::
+                Result :: Err(error) ;
+            },
+        } if identifier_data . as_str() != "MyPoint"
+        {
+            let incompatible_struct_declaration = flexpiler :: common :: rustc
+            :: error :: IncompatibleStructDeclaration
             {
                 struct_declaration_expected : String :: from("MyPoint"),
-                struct_declaration_found : struct_declaration_string,
+                struct_declaration_found : identifier_data,
             } ; let error = flexpiler :: Error ::
             gen(incompatible_struct_declaration) .
-            propagate(MyPointflexpilerDeserializer :: context_general()) ;
-            return Err(error) ;
+            propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                      deserializer :: context :: Trait < MyPoint, flexpiler ::
+                      common :: rustc :: Format >> :: context()) ; return
+            flexpiler :: deserializer :: Result :: Err(error) ;
         } let mut struct_context = MyPointflexpilerContext :: default() ; loop
         {
             let field_declaration_string = match flexpiler :: common :: rustc
@@ -158,8 +193,11 @@ rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
                 {
                     let error = flexpiler :: error :: Error ::
                     gen(parser_error) .
-                    propagate(MyPointflexpilerDeserializer ::
-                              context_general()) ; return Err(error) ;
+                    propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                              deserializer :: context :: Trait < MyPoint,
+                              flexpiler :: common :: rustc :: Format >> ::
+                              context()) ; return flexpiler :: deserializer ::
+                    Result :: Err(error) ;
                 },
                 Ok(flexpiler :: common :: rustc :: block ::
                    declaration_or_data_end :: Result :: DataEnd()) =>
@@ -167,7 +205,7 @@ rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
                 Ok(flexpiler :: common :: rustc :: block ::
                    declaration_or_data_end :: Result ::
                    Declaration(declaration)) => { declaration },
-            } ; let context = match field_declaration_string . as_str()
+            } ; let mut context = match field_declaration_string . as_str()
             {
                 "x" =>
                 {
@@ -175,16 +213,37 @@ rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
                     flexpiler :: common :: rustc :: Format >> :: Deserializer
                     :: deserialize(reader_mut_ref) ; match result
                     {
-                        Ok(value) =>
+                        flexpiler :: deserializer :: Result :: DataFound
+                        { data, context } =>
+                        { struct_context . x_option = Some(data) ; context },
+                        flexpiler :: deserializer :: Result :: NoDataFound
+                        { context } =>
                         {
-                            struct_context . x_option = Some(value . data) ;
-                            value . context
-                        } Err(error) =>
+                            let unexpected_no_content = flexpiler :: error ::
+                            source :: common :: UnexpectedNoContent
+                            {
+                                definition_expected : < i32 as flexpiler ::
+                                identity :: Trait > :: definition(),
+                            } ; let error_source_common : flexpiler :: error
+                            :: source :: Common = unexpected_no_content .
+                            into() ; let error = flexpiler :: Error ::
+                            gen(error_source_common) .
+                            propagate(< MyPointflexpilerDeserializer as
+                                      flexpiler :: deserializer :: context ::
+                                      FieldTrait < MyPoint, flexpiler ::
+                                      common :: rustc :: Format >> ::
+                                      context_field("x")) ; return flexpiler
+                            :: deserializer :: Result :: Err(error) ;
+                        }, flexpiler :: deserializer :: Result :: Err(error)
+                        =>
                         {
                             let error = error .
-                            propagate(MyPointflexpilerDeserializer ::
-                                      context_field("x")) ; return Err(error)
-                            ;
+                            propagate(< MyPointflexpilerDeserializer as
+                                      flexpiler :: deserializer :: context ::
+                                      FieldTrait < MyPoint, flexpiler ::
+                                      common :: rustc :: Format >> ::
+                                      context_field("x")) ; return flexpiler
+                            :: deserializer :: Result :: Err(error) ;
                         }
                     }
                 } "y" =>
@@ -193,22 +252,43 @@ rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
                     flexpiler :: common :: rustc :: Format >> :: Deserializer
                     :: deserialize(reader_mut_ref) ; match result
                     {
-                        Ok(value) =>
+                        flexpiler :: deserializer :: Result :: DataFound
+                        { data, context } =>
+                        { struct_context . y_option = Some(data) ; context },
+                        flexpiler :: deserializer :: Result :: NoDataFound
+                        { context } =>
                         {
-                            struct_context . y_option = Some(value . data) ;
-                            value . context
-                        } Err(error) =>
+                            let unexpected_no_content = flexpiler :: error ::
+                            source :: common :: UnexpectedNoContent
+                            {
+                                definition_expected : < i32 as flexpiler ::
+                                identity :: Trait > :: definition(),
+                            } ; let error_source_common : flexpiler :: error
+                            :: source :: Common = unexpected_no_content .
+                            into() ; let error = flexpiler :: Error ::
+                            gen(error_source_common) .
+                            propagate(< MyPointflexpilerDeserializer as
+                                      flexpiler :: deserializer :: context ::
+                                      FieldTrait < MyPoint, flexpiler ::
+                                      common :: rustc :: Format >> ::
+                                      context_field("y")) ; return flexpiler
+                            :: deserializer :: Result :: Err(error) ;
+                        }, flexpiler :: deserializer :: Result :: Err(error)
+                        =>
                         {
                             let error = error .
-                            propagate(MyPointflexpilerDeserializer ::
-                                      context_field("y")) ; return Err(error)
-                            ;
+                            propagate(< MyPointflexpilerDeserializer as
+                                      flexpiler :: deserializer :: context ::
+                                      FieldTrait < MyPoint, flexpiler ::
+                                      common :: rustc :: Format >> ::
+                                      context_field("y")) ; return flexpiler
+                            :: deserializer :: Result :: Err(error) ;
                         }
                     }
                 } _ =>
                 {
-                    let unrecognized_field = flexpiler :: error ::
-                    UnrecognizedFieldDeclaration
+                    let unrecognized_field = flexpiler :: common :: rustc ::
+                    error :: UnrecognizedFieldDeclaration
                     {
                         field_declaration_found : field_declaration_string,
                         field_declaration_expected_entries : flexpiler ::
@@ -217,38 +297,37 @@ rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
                              [String :: from("x"), String :: from("y"),]),
                     } ; let error = flexpiler :: Error ::
                     gen(unrecognized_field) .
-                    propagate(MyPointflexpilerDeserializer ::
-                              context_general()) ; return Err(error) ;
+                    propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                              deserializer :: context :: Trait < MyPoint,
+                              flexpiler :: common :: rustc :: Format >> ::
+                              context()) ; return flexpiler :: deserializer ::
+                    Result :: Err(error) ;
                 }
-            } ; match context
+            } ; if context == flexpiler :: common :: rustc :: deserializer ::
+            Context :: Freestanding
+            {
+                match flexpiler :: common :: rustc :: block ::
+                ContextDenominator :: parse(reader_mut_ref)
+                {
+                    Ok(result) => { context = result . finish . into() ; },
+                    Err(parser_error) =>
+                    {
+                        let error = flexpiler :: Error :: gen(parser_error) .
+                        propagate(< MyPointflexpilerDeserializer as flexpiler
+                                  :: deserializer :: context :: Trait <
+                                  MyPoint, flexpiler :: common :: rustc ::
+                                  Format >> :: context()) ; return flexpiler
+                        :: deserializer :: Result :: Err(error) ;
+                    }
+                }
+            } match context
             {
                 flexpiler :: common :: rustc :: deserializer :: Context ::
-                Freestanding =>
-                {
-                    match flexpiler :: common :: rustc :: block ::
-                    DataEndOrSeparator :: parse(reader_mut_ref)
-                    {
-                        Ok(flexpiler :: common :: rustc :: block ::
-                           data_end_or_separator :: Result :: DataEnd) =>
-                        { break ; },
-                        Ok(flexpiler :: common :: rustc :: block ::
-                           data_end_or_separator :: Result :: Separator) =>
-                        { }, Err(parser_error) =>
-                        {
-                            let error = flexpiler :: error :: Error ::
-                            gen(parser_error) .
-                            propagate(MyPointflexpilerDeserializer ::
-                                      context_field(field_declaration_string .
-                                                    as_str())) ; return
-                            Err(error) ;
-                        },
-                    }
-                }, flexpiler :: common :: rustc :: deserializer :: Context ::
                 DataEnd => { break ; }, flexpiler :: common :: rustc ::
                 deserializer :: Context :: Separator => { }, _ =>
                 {
-                    let unexpected_entry_finish_context = flexpiler :: error
-                    :: UnexpectedEntryFinishContext
+                    let unexpected_entry_finish_context = flexpiler :: common
+                    :: rustc :: error :: UnexpectedEntryFinishContext
                     {
                         entry_declaration : field_declaration_string,
                         context_expected : flexpiler :: error ::
@@ -260,20 +339,25 @@ rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
                         context_found : context,
                     } ; let error = flexpiler :: Error ::
                     gen(unexpected_entry_finish_context) .
-                    propagate(MyPointflexpilerDeserializer ::
-                              context_general()) ; return Err(error) ;
+                    propagate(< MyPointflexpilerDeserializer as flexpiler ::
+                              deserializer :: context :: Trait < MyPoint,
+                              flexpiler :: common :: rustc :: Format >> ::
+                              context()) ; return flexpiler :: deserializer ::
+                    Result :: Err(error) ;
                 }
             }
-        } return match struct_context . try_into()
+        } return match < MyPointflexpilerContext as std :: convert :: TryInto
+        < MyPoint >> :: try_into(struct_context)
         {
             Ok(data) =>
             {
-                Ok(flexpiler :: deserializer :: Result
-                   {
-                       context : flexpiler :: common :: rustc :: deserializer
-                       :: Context :: Freestanding, data,
-                   })
-            }, Err(error) => { Err(error) },
+                flexpiler :: deserializer :: Result :: DataFound
+                {
+                    context : flexpiler :: common :: rustc :: deserializer ::
+                    Context :: Freestanding, data,
+                }
+            }, Err(error) =>
+            { flexpiler :: deserializer :: Result :: Err(error) },
         }
     }
 } 
@@ -281,7 +365,7 @@ rustc :: deserializer :: Context > for MyPointflexpilerDeserializer
 
 impl flexpiler :: Deserialization < flexpiler :: common :: rustc :: Format >
 for MyPoint {
-    type Deserializer = MyPointflexpilerDeserializer; 
+    type Deserializer = MyPointflexpilerDeserializer ; 
 }
 
 ```
