@@ -8,37 +8,54 @@ use crate::error::ExpectedEntries;
 
 enum Context {
     Initial,
+    InitialComment,
 
-    Comment,
+    InitialArgumentEnd,
+    InitialArgumentStart,
+    InitialDataEnd,
+    InitialDataStart,
+    InitialListEnd,
+    InitialListStart,
+    InitialSeparator,
 
     StringDenominated,
     StringFreestanding,
 
-    FinishFreestanding,
-    FinishArgumentEnd,
-    FinishDataEnd,
-    FinishSeparator,
+    FinishedArgumentEnd,
+    FinishedArgumentStart,
+    FinishedDataEnd,
+    FinishedDataStart,
+    FinishedFreestanding,
+    FinishedListEnd,
+    FinishedListStart,
+    FinishedSeparator,
 
     Error,
 }
 
 
 pub enum Finish {
-    Freestanding,
+    NoContext,
+
     ArgumentEnd,
+    ArgumentStart,
     DataEnd,
+    DataStart,
+    Freestanding,
+    ListEnd,
+    ListStart,
     Separator,
 }
 
 
-pub struct Result {
-    pub finish: Finish,
-    pub string: std::string::String,
+pub enum Result {
+    NoDataFound{ finish: Finish },
+    DataFound{ data: std::string::String, finish: Finish },
 }
 
 
 pub struct String {
-    error: error::Error,
+    error_source: error::Source,
     context: Context,
     string: std::string::String,
 }
@@ -47,9 +64,15 @@ pub struct String {
 impl Into<crate::common::rustc::deserializer::Context> for Finish {
     fn into(self) -> crate::common::rustc::deserializer::Context {
         return match self {
-            Finish::DataEnd => crate::common::rustc::deserializer::Context::DataEnd,
-            Finish::Freestanding => crate::common::rustc::deserializer::Context::Freestanding,
+            Finish::NoContext => crate::common::rustc::deserializer::Context::Freestanding,
+
             Finish::ArgumentEnd => crate::common::rustc::deserializer::Context::ArgumentEnd,
+            Finish::ArgumentStart => crate::common::rustc::deserializer::Context::ArgumentStart,
+            Finish::DataEnd => crate::common::rustc::deserializer::Context::DataEnd,
+            Finish::DataStart => crate::common::rustc::deserializer::Context::DataStart,
+            Finish::Freestanding => crate::common::rustc::deserializer::Context::Freestanding,
+            Finish::ListEnd => crate::common::rustc::deserializer::Context::ListEnd,
+            Finish::ListStart => crate::common::rustc::deserializer::Context::ListStart,
             Finish::Separator => crate::common::rustc::deserializer::Context::Separator,
         }
     }
@@ -59,9 +82,7 @@ impl Into<crate::common::rustc::deserializer::Context> for Finish {
 impl String {
     pub fn new() -> String {
         String {
-            error: error::Error {
-                error_source: error::Source::NoContent,
-            },
+            error_source: error::Source::NoContent,
             context: Context::Initial,
             string: std::string::String::new(),
         }
@@ -84,7 +105,7 @@ impl block::Trait for String {
             // Accept comments in initial state
             (&Context::Initial,
                 DENOMINATOR_COMMENT) => {
-                self.context = Context::Comment;
+                self.context = Context::InitialComment;
                 return block::AdvanceResult::Continuous;
             },
 
@@ -96,6 +117,43 @@ impl block::Trait for String {
             | (&Context::Initial,
                 DENOMINATOR_TAB) => {
                 return block::AdvanceResult::Continuous;
+            },
+
+            // Initial state context denominators
+            (&Context::Initial,
+                DENOMINATOR_ARGUMENT_END) => {
+                self.context = Context::InitialArgumentEnd;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_ARGUMENT_START) => {
+                self.context = Context::InitialArgumentStart;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_DATA_END) => {
+                self.context = Context::InitialDataEnd;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_DATA_START) => {
+                self.context = Context::InitialDataStart;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_LIST_END) => {
+                self.context = Context::InitialListStart;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_LIST_START) => {
+                self.context = Context::InitialListStart;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_SEPARATOR) => {
+                self.context = Context::InitialSeparator;
+                block::AdvanceResult::Finished
             },
 
             // On encountering the first non ignorable | comment char
@@ -113,19 +171,10 @@ impl block::Trait for String {
                 self.string.push(read_byte as char);
                 return block::AdvanceResult::Continuous;
             },
-            
-            (&Context::Initial,
-                _) => {
-                self.error.error_source = error::Source::UnexpectedToken(error::UnexpectedToken{
-                    token_expected_entries: ExpectedEntries::from(vec![DENOMINATOR_STRING as char]),
-                    token_found: read_byte as char,
-                });
-                return block::AdvanceResult::Error;
-            },
 
             (&Context::StringDenominated,
                 DENOMINATOR_STRING) => {
-                self.context = Context::FinishFreestanding;
+                self.context = Context::FinishedFreestanding;
                 return block::AdvanceResult::Finished;
             },
 
@@ -142,25 +191,43 @@ impl block::Trait for String {
                 DENOMINATOR_SPACE)
             | (&Context::StringFreestanding,
                 DENOMINATOR_TAB) => {
-                self.context = Context::FinishFreestanding;
-                return block::AdvanceResult::Finished;
-            },
-
-            (&Context::StringFreestanding,
-                DENOMINATOR_DATA_END) => {
-                self.context = Context::FinishDataEnd;
+                self.context = Context::FinishedFreestanding;
                 return block::AdvanceResult::Finished;
             },
 
             (&Context::StringFreestanding,
                 DENOMINATOR_ARGUMENT_END) => {
-                self.context = Context::FinishArgumentEnd;
+                self.context = Context::FinishedArgumentEnd;
                 return block::AdvanceResult::Finished;
             },
-
+            (&Context::StringFreestanding,
+                DENOMINATOR_ARGUMENT_START) => {
+                self.context = Context::FinishedArgumentStart;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::StringFreestanding,
+                DENOMINATOR_DATA_END) => {
+                self.context = Context::FinishedDataEnd;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::StringFreestanding,
+                DENOMINATOR_DATA_START) => {
+                self.context = Context::FinishedDataStart;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::StringFreestanding,
+                DENOMINATOR_LIST_END) => {
+                self.context = Context::FinishedListEnd;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::StringFreestanding,
+                DENOMINATOR_LIST_START) => {
+                self.context = Context::FinishedListStart;
+                return block::AdvanceResult::Finished;
+            },
             (&Context::StringFreestanding,
                 DENOMINATOR_SEPARATOR) => {
-                self.context = Context::FinishSeparator;
+                self.context = Context::FinishedSeparator;
                 return block::AdvanceResult::Finished;
             },
 
@@ -171,22 +238,33 @@ impl block::Trait for String {
             },
 
             // On newline from comment reset deserializer
-            (&Context::Comment,
+            (&Context::InitialComment,
                 DENOMINATOR_NEW_LINE) => {
                 self.context = Context::Initial;
                 return block::AdvanceResult::Continuous;
             },
 
             // Ignore any other character in a comment
-            (&Context::Comment,
+            (&Context::InitialComment,
                 _) => {
                 return block::AdvanceResult::Continuous;
             },
 
-            (&Context::FinishSeparator, _)
-            | (&Context::FinishArgumentEnd, _)
-            | (&Context::FinishDataEnd, _)
-            | (&Context::FinishFreestanding, _) => {
+            (&Context::InitialArgumentEnd, _)
+            | (&Context::InitialArgumentStart, _)
+            | (&Context::InitialDataEnd, _)
+            | (&Context::InitialDataStart, _)
+            | (&Context::InitialListEnd, _)
+            | (&Context::InitialListStart, _)
+            | (&Context::InitialSeparator, _)
+            | (&Context::FinishedArgumentEnd, _)
+            | (&Context::FinishedArgumentStart, _)
+            | (&Context::FinishedDataEnd, _)
+            | (&Context::FinishedDataStart, _)
+            | (&Context::FinishedFreestanding, _)
+            | (&Context::FinishedListEnd, _)
+            | (&Context::FinishedListStart, _)
+            | (&Context::FinishedSeparator, _) => {
                 return block::AdvanceResult::Finished;
             },
 
@@ -197,39 +275,106 @@ impl block::Trait for String {
         }
     }
 
-    fn into_result(self) -> std::result::Result<Result, error::Error> {
-        match self.context {
+    fn into_result(self) -> std::result::Result<Result, error::Source> {
+        return match self.context {
             Context::Initial
-            | Context::Comment
-            | Context::StringFreestanding
+            | Context::InitialComment
             | Context::StringDenominated
             | Context::Error => {
-                return Err(self.error);
+                Err(self.error_source)
             },
-            Context::FinishFreestanding => {
-                return Ok(Result {
-                    finish: Finish::Freestanding,
-                    string: self.string,
-                });
-            },
-            Context::FinishDataEnd => {
-                return Ok(Result {
-                    finish: Finish::DataEnd,
-                    string: self.string,
-                });
-            },
-            Context::FinishSeparator => {
-                return Ok(Result {
-                    finish: Finish::Separator,
-                    string: self.string,
-                });
-            },
-            Context::FinishArgumentEnd => {
-                return Ok(Result {
+
+            Context::InitialArgumentEnd => {
+                Ok(Result::NoDataFound {
                     finish: Finish::ArgumentEnd,
-                    string: self.string,
-                });
+                })
             },
-        }
+            Context::InitialArgumentStart => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::ArgumentStart,
+                })
+            },
+            Context::InitialDataEnd => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::DataEnd,
+                })
+            },
+            Context::InitialDataStart => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::DataStart,
+                })
+            },
+            Context::InitialListEnd => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::ListEnd,
+                })
+            },
+            Context::InitialListStart => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::ListStart,
+                })
+            },
+            Context::InitialSeparator => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::Separator,
+                })
+            },
+
+            Context::StringFreestanding => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::NoContext,
+                })
+            },
+
+            Context::FinishedArgumentEnd => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ArgumentEnd,
+                })
+            },
+            Context::FinishedArgumentStart => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ArgumentStart,
+                })
+            },
+            Context::FinishedDataEnd => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::DataEnd,
+                })
+            },
+            Context::FinishedDataStart => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::DataStart,
+                })
+            },
+            Context::FinishedFreestanding => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::Freestanding,
+                })
+            },
+            Context::FinishedListEnd => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ListEnd,
+                })
+            },
+            Context::FinishedListStart => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ListStart,
+                })
+            },
+            Context::FinishedSeparator => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::Separator,
+                })
+            },
+        };
     }
 }

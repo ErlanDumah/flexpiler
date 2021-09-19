@@ -26,11 +26,6 @@ pub enum Source {
 }
 
 
-pub struct Error {
-    pub error_source: Source,
-}
-
-
 impl std::fmt::Display for UnexpectedToken {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "Expected any of mandatory token {}, found token {}", self.token_expected_entries, self.token_found)

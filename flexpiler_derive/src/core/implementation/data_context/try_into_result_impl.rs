@@ -34,20 +34,23 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for TryIntoResultImpl {
 
         quote!{
             impl std::convert::TryInto<#struct_definition_ident_ref> for #struct_data_context_intermediary_ident_ref {
-                type Error = flexpiler::Error;
+                type Error = flexpiler::Error<flexpiler::common::rustc::error::Source>;
 
-                fn try_into(self) -> std::result::Result<#struct_definition_ident_ref, flexpiler::Error> {
+                fn try_into(self) -> std::result::Result<#struct_definition_ident_ref, Self::Error> {
+                    use flexpiler::deserializer::Trait as DeserializerTrait;
+                    use flexpiler::deserializer::context::Trait as DeserializerContextTrait;
                     use flexpiler::error::Trait as ErrorTrait;
+                    use flexpiler::error::propagation::Trait as ErrorPropagationTrait;
 
                     #(let #struct_intermediary_field_ident_vec_ref = match self.#struct_data_context_intermediary_field_ident_vec_ref {
                         Some(value) => value,
                         None => {
-                            let missing_struct_field = flexpiler::error::MissingStructField {
+                            let missing_struct_field = flexpiler::common::rustc::error::MissingStructField {
                                 struct_declaration_found: std::string::String::from(#struct_intermediary_ident_string_ref),
                                 field_declaration_expected: std::string::String::from(#struct_intermediary_field_string_vec_ref),
                             };
                             let error = flexpiler::Error::gen(missing_struct_field)
-                                .propagate(#struct_deserializer_intermediary_ident_ref::context_general());
+                                .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
                             return Err(error);
                         }
                     };
@@ -67,6 +70,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for TryIntoResultImpl {
 impl<'a> implementation::Trait<ParameterEnum<'a>> for TryIntoResultImpl {
     fn gen(parameter: ParameterEnum) -> proc_macro2::TokenStream {
         let enum_definition_ident_ref = &parameter.enum_definition_ref.ident;
+        let enum_variant_complex_ident_string_ref = &parameter.enum_variant_complex_intermediary_ref.ident_string;
         let enum_variant_complex_full_ident_ref = &parameter.enum_variant_complex_intermediary_ref.full_ident_tokenstream;
         let enum_variant_complex_full_ident_string_ref = &parameter.enum_variant_complex_intermediary_ref.full_ident_string;
         let enum_variant_complex_intermediary_field_ident_ref_vec_ref = &parameter.enum_variant_complex_intermediary_ref.field_ident_ref_vec;
@@ -77,21 +81,24 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for TryIntoResultImpl {
 
         quote!{
             impl std::convert::TryInto<#enum_definition_ident_ref> for #enum_variant_data_context_intermediary_ident_ref {
-                type Error = flexpiler::Error;
+                type Error = flexpiler::Error<flexpiler::common::rustc::error::Source>;
 
-                fn try_into(self) -> std::result::Result<#enum_definition_ident_ref, flexpiler::Error> {
+                fn try_into(self) -> std::result::Result<#enum_definition_ident_ref, Self::Error> {
+                    use flexpiler::deserializer::context::Trait as DeserializerContextTrait;
+                    use flexpiler::deserializer::context::VariantTrait as DeserializerVariantTrait;
                     use flexpiler::error::Trait as ErrorTrait;
+                    use flexpiler::error::propagation::Trait as ErrorPropagationTrait;
 
                     #(let #enum_variant_complex_intermediary_field_ident_ref_vec_ref = match self.#enum_variant_data_context_intermediary_field_ident_vec_ref {
                         Some(value) => value,
                         None => {
-                            let missing_enum_field = flexpiler::error::MissingEnumComplexField {
+                            let missing_enum_field = flexpiler::common::rustc::error::MissingEnumComplexField {
                                 enum_declaration_found: std::string::String::from(#enum_variant_complex_full_ident_string_ref),
                                 field_declaration_expected: std::string::String::from(#enum_variant_complex_intermediary_field_string_vec_ref),
                             };
                             let error = flexpiler::Error::gen(missing_enum_field)
-                                .propagate(#enum_deserializer_intermediary_ident_ref::context_entry_general(#enum_variant_complex_full_ident_string_ref));
-                            return Err(error);
+                                .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#enum_variant_complex_ident_string_ref));
+                            return std::result::Result::Err(error);
                         }
                     };
                     )*

@@ -4,6 +4,7 @@ pub mod deserializer;
 pub use deserializer::Deserializer;
 pub mod flexpiler;
 pub use self::flexpiler::Flexpiler;
+pub mod identity;
 pub mod struct_rustc;
 
 

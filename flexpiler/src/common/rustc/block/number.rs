@@ -3,20 +3,30 @@ use super::constants::*;
 use crate::block;
 use crate::parser::error;
 use crate::reader;
-use crate::common::rustc::block::number::Context::FinishFreestanding;
 
 
 enum Context {
     Initial,
+    InitialComment,
 
-    Comment,
+    InitialArgumentEnd,
+    InitialArgumentStart,
+    InitialDataEnd,
+    InitialDataStart,
+    InitialListEnd,
+    InitialListStart,
+    InitialSeparator,
 
     Number,
 
-    FinishFreestanding,
-    FinishArgumentEnd,
-    FinishDataEnd,
-    FinishSeparator,
+    FinishedArgumentEnd,
+    FinishedArgumentStart,
+    FinishedDataEnd,
+    FinishedDataStart,
+    FinishedFreestanding,
+    FinishedListEnd,
+    FinishedListStart,
+    FinishedSeparator,
 
     Error,
 }
@@ -25,21 +35,25 @@ enum Context {
 pub enum Finish {
     NoContext,
 
-    Freestanding,
     ArgumentEnd,
+    ArgumentStart,
     DataEnd,
+    DataStart,
+    Freestanding,
+    ListEnd,
+    ListStart,
     Separator,
 }
 
 
-pub struct Result {
-    pub finish: Finish,
-    pub string: std::string::String,
+pub enum Result {
+    NoDataFound{ finish: Finish },
+    DataFound{ data: std::string::String, finish: Finish },
 }
 
 
 pub struct Number {
-    error: error::Error,
+    error_source: error::Source,
     context: Context,
     string: std::string::String,
 }
@@ -49,9 +63,14 @@ impl Into<crate::common::rustc::deserializer::Context> for Finish {
     fn into(self) -> crate::common::rustc::deserializer::Context {
         return match self {
             Finish::NoContext => crate::common::rustc::deserializer::Context::Freestanding,
-            Finish::Freestanding => crate::common::rustc::deserializer::Context::Freestanding,
+
             Finish::ArgumentEnd => crate::common::rustc::deserializer::Context::ArgumentEnd,
+            Finish::ArgumentStart => crate::common::rustc::deserializer::Context::ArgumentStart,
             Finish::DataEnd => crate::common::rustc::deserializer::Context::DataEnd,
+            Finish::DataStart => crate::common::rustc::deserializer::Context::DataStart,
+            Finish::Freestanding => crate::common::rustc::deserializer::Context::Freestanding,
+            Finish::ListEnd => crate::common::rustc::deserializer::Context::ListEnd,
+            Finish::ListStart => crate::common::rustc::deserializer::Context::ListStart,
             Finish::Separator => crate::common::rustc::deserializer::Context::Separator,
         }
     }
@@ -61,9 +80,7 @@ impl Into<crate::common::rustc::deserializer::Context> for Finish {
 impl Number {
     pub fn new() -> Number {
         Number {
-            error: error::Error {
-                error_source: error::Source::NoContent,
-            },
+            error_source: error::Source::NoContent,
             context: Context::Initial,
             string: std::string::String::new(),
         }
@@ -86,7 +103,7 @@ impl block::Trait for Number {
             // Accept comments in initial state
             (&Context::Initial,
                 DENOMINATOR_COMMENT) => {
-                self.context = Context::Comment;
+                self.context = Context::InitialComment;
                 return block::AdvanceResult::Continuous;
             },
 
@@ -98,6 +115,43 @@ impl block::Trait for Number {
             | (&Context::Initial,
                 DENOMINATOR_TAB) => {
                 return block::AdvanceResult::Continuous;
+            },
+
+            // Initial state context denominators
+            (&Context::Initial,
+                DENOMINATOR_ARGUMENT_END) => {
+                self.context = Context::InitialArgumentEnd;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_ARGUMENT_START) => {
+                self.context = Context::InitialArgumentStart;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_DATA_END) => {
+                self.context = Context::InitialDataEnd;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_DATA_START) => {
+                self.context = Context::InitialDataStart;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_LIST_END) => {
+                self.context = Context::InitialListEnd;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_LIST_START) => {
+                self.context = Context::InitialListStart;
+                block::AdvanceResult::Finished
+            },
+            (&Context::Initial,
+                DENOMINATOR_SEPARATOR) => {
+                self.context = Context::InitialSeparator;
+                block::AdvanceResult::Finished
             },
 
             // On encountering regular
@@ -114,25 +168,43 @@ impl block::Trait for Number {
                 DENOMINATOR_SPACE)
             | (&Context::Number,
                 DENOMINATOR_TAB) => {
-                self.context = Context::FinishFreestanding;
-                return block::AdvanceResult::Finished;
-            },
-
-            (&Context::Number,
-                DENOMINATOR_SEPARATOR) => {
-                self.context = Context::FinishSeparator;
+                self.context = Context::FinishedFreestanding;
                 return block::AdvanceResult::Finished;
             },
 
             (&Context::Number,
                 DENOMINATOR_ARGUMENT_END) => {
-                self.context = Context::FinishArgumentEnd;
+                self.context = Context::FinishedArgumentEnd;
                 return block::AdvanceResult::Finished;
             },
-
+            (&Context::Number,
+                DENOMINATOR_ARGUMENT_START) => {
+                self.context = Context::FinishedArgumentStart;
+                return block::AdvanceResult::Finished;
+            },
             (&Context::Number,
                 DENOMINATOR_DATA_END) => {
-                self.context = Context::FinishDataEnd;
+                self.context = Context::FinishedDataEnd;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::Number,
+                DENOMINATOR_DATA_START) => {
+                self.context = Context::FinishedDataStart;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::Number,
+                DENOMINATOR_LIST_END) => {
+                self.context = Context::FinishedListEnd;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::Number,
+                DENOMINATOR_LIST_START) => {
+                self.context = Context::FinishedListStart;
+                return block::AdvanceResult::Finished;
+            },
+            (&Context::Number,
+                DENOMINATOR_SEPARATOR) => {
+                self.context = Context::FinishedSeparator;
                 return block::AdvanceResult::Finished;
             },
 
@@ -143,22 +215,34 @@ impl block::Trait for Number {
             },
 
             // On newline from comment reset deserializer
-            (&Context::Comment,
+            (&Context::InitialComment,
                 DENOMINATOR_NEW_LINE) => {
                 self.context = Context::Initial;
                 return block::AdvanceResult::Continuous;
             },
 
             // Ignore any other character in a comment
-            (&Context::Comment,
+            (&Context::InitialComment,
                 _) => {
                 return block::AdvanceResult::Continuous;
             },
 
-            (&Context::FinishSeparator, _)
-            | (&Context::FinishDataEnd, _)
-            | (&Context::FinishArgumentEnd, _)
-            | (&Context::FinishFreestanding, _) => {
+            (&Context::InitialArgumentEnd, _)
+            | (&Context::InitialArgumentStart, _)
+            | (&Context::InitialDataEnd, _)
+            | (&Context::InitialDataStart, _)
+            | (&Context::InitialListEnd, _)
+            | (&Context::InitialListStart, _)
+            | (&Context::InitialSeparator, _)
+            | (&Context::FinishedSeparator, _)
+            | (&Context::FinishedArgumentEnd, _)
+            | (&Context::FinishedArgumentStart, _)
+            | (&Context::FinishedDataEnd, _)
+            | (&Context::FinishedDataStart, _)
+            | (&Context::FinishedFreestanding, _)
+            | (&Context::FinishedListEnd, _)
+            | (&Context::FinishedListStart, _)
+            | (&Context::FinishedSeparator, _) => {
                 return block::AdvanceResult::Finished;
             },
 
@@ -169,43 +253,105 @@ impl block::Trait for Number {
         }
     }
 
-    fn into_result(self) -> std::result::Result<Result, error::Error> {
-        match self.context {
+    fn into_result(self) -> std::result::Result<Result, error::Source> {
+        return match self.context {
             Context::Initial
-            | Context::Comment
+            | Context::InitialComment
             | Context::Error => {
-                return Err(self.error);
+                Err(self.error_source)
             },
-            Context::Number => {
-                return Ok(Result {
-                    finish: Finish::NoContext,
-                    string: self.string,
+
+            Context::InitialArgumentEnd => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::ArgumentEnd,
                 })
             },
-            Context::FinishFreestanding => {
-                return Ok(Result {
-                    finish: Finish::Freestanding,
-                    string: self.string,
-                });
+            Context::InitialArgumentStart => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::ArgumentStart,
+                })
             },
-            Context::FinishArgumentEnd => {
-                return Ok(Result {
-                    finish: Finish::ArgumentEnd,
-                    string: self.string,
-                });
-            },
-            Context::FinishDataEnd => {
-                return Ok(Result {
+            Context::InitialDataEnd => {
+                Ok(Result::NoDataFound {
                     finish: Finish::DataEnd,
-                    string: self.string,
-                });
+                })
             },
-            Context::FinishSeparator => {
-                return Ok(Result {
+            Context::InitialDataStart => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::DataStart,
+                })
+            },
+            Context::InitialListEnd => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::ListEnd,
+                })
+            },
+            Context::InitialListStart => {
+                Ok(Result::NoDataFound {
+                    finish: Finish::ListStart,
+                })
+            },
+            Context::InitialSeparator => {
+                Ok(Result::NoDataFound {
                     finish: Finish::Separator,
-                    string: self.string,
-                });
+                })
             },
-        }
+
+            Context::Number => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::NoContext,
+                })
+            },
+
+            Context::FinishedArgumentEnd => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ArgumentEnd,
+                })
+            },
+            Context::FinishedArgumentStart => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ArgumentStart,
+                })
+            },
+            Context::FinishedDataEnd => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::DataEnd,
+                })
+            },
+            Context::FinishedDataStart => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::DataStart,
+                })
+            },
+            Context::FinishedFreestanding => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::Freestanding,
+                })
+            },
+            Context::FinishedListEnd => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ListEnd,
+                })
+            },
+            Context::FinishedListStart => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::ListStart,
+                })
+            },
+            Context::FinishedSeparator => {
+                Ok(Result::DataFound {
+                    data: self.string,
+                    finish: Finish::Separator,
+                })
+            },
+        };
     }
 }

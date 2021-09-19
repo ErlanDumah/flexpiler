@@ -17,31 +17,42 @@ fn context() -> error::Context {
 pub struct String;
 
 
+impl crate::identity::Trait for std::string::String {
+    fn definition() -> std::string::String {
+        return std::string::String::from("String");
+    }
+}
+
+
 impl crate::deserializer::Trait<
     std::string::String,
-    crate::common::rustc::deserializer::Context
+    crate::common::rustc::Format
 > for String {
     fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
-        -> Result<crate::deserializer::Result<std::string::String, crate::common::rustc::deserializer::Context>, error::Error>
+        -> crate::deserializer::Result<std::string::String, crate::common::rustc::deserializer::Context, crate::Error<crate::common::rustc::error::Source>>
     where ReaderType: reader::Trait {
+        use crate::error::Trait as ErrorTrait;
+        use crate::error::propagation::Trait as PropagationTrait;
         use crate::parser::Parse;
 
-        let parse_string_result = match block::String::parse(reader_mut_ref) {
+        let (string_data, string_finish) = match block::String::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
                     .propagate(context());
-                return Err(error);
+                return crate::deserializer::Result::Err(error);
             },
-            Ok(parser_result) => parser_result,
+            Ok(block::string::Result::NoDataFound { finish }) => {
+                return crate::deserializer::Result::NoDataFound { context: finish.into() };
+            },
+            Ok(block::string::Result::DataFound { data, finish }) => {
+                (data, finish)
+            },
         };
 
-        let context = parse_string_result.finish.into();
-        let data = parse_string_result.string;
-
-        return Ok(crate::deserializer::Result{
-            data,
-            context,
-        });
+        return crate::deserializer::Result::DataFound{
+            data: string_data,
+            context: string_finish.into(),
+        };
     }
 }
 

@@ -1,4 +1,5 @@
 mod subclass;
+mod vec;
 
 
 #[derive(flexpiler::Deserialize)]
