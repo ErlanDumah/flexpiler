@@ -32,29 +32,33 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
         use crate::error::Trait as ErrorTrait;
         use crate::parser::Parse;
 
-        let parse_identifier_result = match block::IdentifierWithVariableFinish::parse(reader_mut_ref) {
+        let (identifier, identifier_context) = match block::Identifier::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
                     .propagate(<Option as crate::deserializer::context::Trait<std::option::Option<DataType>, crate::common::rustc::Format>>::context());
                 return deserializer::Result::Err(error);
             },
-            Ok(parser_result) => parser_result,
+            Ok(block::identifier::Result::NoDataFound { finish }) => {
+                return deserializer::Result::NoDataFound { context: finish.into() };
+            },
+            Ok(block::identifier::Result::DataFound { data, finish }) => {
+                let context: crate::common::rustc::deserializer::Context = finish.into();
+                (data, context)
+            },
         };
 
-        let result = match parse_identifier_result.identifier_string.as_str() {
+        let result = match identifier.as_str() {
             "None"
             | "Option::None" => {
-                let context: crate::common::rustc::deserializer::Context = parse_identifier_result.finish.into();
                 crate::deserializer::Result::DataFound {
                     data: std::option::Option::None,
-                    context,
+                    context: identifier_context,
                 }
             },
 
             "Some"
             | "Option::Some" => {
-                let context: crate::common::rustc::deserializer::Context = parse_identifier_result.finish.into();
-                match context {
+                match identifier_context {
                     crate::common::rustc::deserializer::Context::Freestanding => {
                         match crate::parser::parse::<
                             crate::common::rustc::block::ArgumentStart,
@@ -72,9 +76,9 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
                     },
                     _ => {
                         let incompatible_enum_data_type = crate::common::rustc::error::IncompatibleEnumDataType {
-                            enum_declaration_found: parse_identifier_result.identifier_string,
+                            enum_declaration_found: identifier,
                             enum_data_type_expected: crate::common::rustc::error::incompatibleenumdataType::EnumDataType::Argument,
-                            context_found: context,
+                            context_found: identifier_context,
                         };
                         let error = crate::Error::gen(incompatible_enum_data_type)
                             .propagate(<Option as crate::deserializer::context::Trait<std::option::Option<DataType>, crate::common::rustc::Format>>::context());
@@ -86,7 +90,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
                     deserializer::Result::DataFound{ data, context} => (data, context),
                     deserializer::Result::NoDataFound { context } => {
                         let unexpected_no_content = crate::common::rustc::error::MissingEnumArgument {
-                            enum_declaration_found: parse_identifier_result.identifier_string,
+                            enum_declaration_found: identifier,
                             argument_type_expected: DataType::definition(),
                         };
                         let error = crate::Error::gen(unexpected_no_content)
@@ -115,7 +119,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
                     },
                     _ => {
                         let missing_argument_closure = crate::common::rustc::error::MissingEnumArgumentClosure{
-                            enum_declaration_found: parse_identifier_result.identifier_string,
+                            enum_declaration_found: identifier,
                         };
                         let error = crate::Error::gen(missing_argument_closure)
                             .propagate(<Option as crate::deserializer::context::Trait<std::option::Option<DataType>, crate::common::rustc::Format>>::context());
@@ -132,7 +136,7 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
 
             _ => {
                 let incompatible_declaration_found = crate::common::rustc::error::IncompatibleEnumDeclaration {
-                    enum_declaration_found: parse_identifier_result.identifier_string,
+                    enum_declaration_found: identifier,
                     enum_declaration_expected_entries: error::ExpectedEntries::from(vec![
                         std::string::String::from("Some"),
                         std::string::String::from("Option::Some"),

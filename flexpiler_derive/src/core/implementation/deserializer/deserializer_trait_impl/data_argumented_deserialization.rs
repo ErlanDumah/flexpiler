@@ -35,7 +35,7 @@ impl DataArgumentedDeserialization {
                 },
                 _ => {
                     let missing_argument_closure = flexpiler::common::rustc::error::MissingEnumArgumentSeparator{
-                        enum_declaration_found: declaration_result.identifier_string,
+                        enum_declaration_found: identifier_data,
                     };
                     let error = flexpiler::Error::gen(missing_argument_closure)
                         .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
@@ -86,7 +86,7 @@ impl DataArgumentedDeserialization {
                 },
                 _ => {
                     let missing_argument_closure = flexpiler::common::rustc::error::MissingEnumArgumentSeparator{
-                        enum_declaration_found: declaration_result.identifier_string,
+                        enum_declaration_found: identifier_data,
                     };
                     let error = flexpiler::Error::gen(missing_argument_closure)
                         .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
@@ -112,7 +112,7 @@ impl DataArgumentedDeserialization {
                 flexpiler::deserializer::Result::DataFound { data, context } => (data, context),
                 flexpiler::deserializer::Result::NoDataFound { context } => {
                     let missing_enum_argument = flexpiler::common::rustc::error::MissingEnumArgument {
-                        enum_declaration_found: declaration_result.identifier_string,
+                        enum_declaration_found: identifier_data,
                         argument_type_expected: <#field_type_ref as flexpiler::identity::Trait>::definition(),
                     };
                     let error = flexpiler::Error::gen(missing_enum_argument)

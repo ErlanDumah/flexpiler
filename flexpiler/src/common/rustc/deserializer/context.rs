@@ -17,28 +17,28 @@ impl std::fmt::Display for Context {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Context::Freestanding => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_SPACE)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_SPACE as char)
             },
             Context::Separator => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_SEPARATOR)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_SEPARATOR as char)
             },
             Context::ArgumentStart => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_ARGUMENT_START)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_ARGUMENT_START as char)
             },
             Context::ArgumentEnd => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_ARGUMENT_END)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_ARGUMENT_END as char)
             },
             Context::DataStart => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_DATA_START)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_DATA_START as char)
             },
             Context::DataEnd => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_DATA_END)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_DATA_END as char)
             },
             Context::ListStart => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_LIST_START)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_LIST_START as char)
             },
             Context::ListEnd => {
-                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_LIST_END)
+                write!(f, "'{}'", crate::common::rustc::block::constants::DENOMINATOR_LIST_END as char)
             },
         }
     }

@@ -31,6 +31,11 @@ pub struct IncompatibleStructDeclaration {
 }
 
 
+pub struct IncompatibleVectorDeclaration {
+    pub vector_declaration_found: std::string::String,
+}
+
+
 pub struct MissingEnumArgumentSeparator {
     pub enum_declaration_found: std::string::String,
 }
@@ -86,6 +91,7 @@ pub enum Source {
     IncompatibleEnumDeclaration(IncompatibleEnumDeclaration),
     IncompatibleEnumDataType(IncompatibleEnumDataType),
     IncompatibleStructDeclaration(IncompatibleStructDeclaration),
+    IncompatibleVectorDeclaration(IncompatibleVectorDeclaration),
     MissingEnumArgumentSeparator(MissingEnumArgumentSeparator),
     MissingEnumArgument(MissingEnumArgument),
     MissingEnumArgumentClosure(MissingEnumArgumentClosure),
@@ -132,6 +138,15 @@ impl std::fmt::Display for IncompatibleEnumDeclaration {
         write!(f, "Expected declaration of enum as any of {}, instead found unexpected declaration name {}",
                self.enum_declaration_expected_entries,
                self.enum_declaration_found)
+    }
+}
+
+
+impl std::fmt::Display for IncompatibleVectorDeclaration {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Expected declaration of vector as any of {}, instead found unexpected declaration name {}",
+               "{[<data>], vec![<data>], Vec::new(), std::vec::Vec::new()}",
+               self.vector_declaration_found)
     }
 }
 
@@ -228,6 +243,9 @@ impl std::fmt::Display for Source {
             &Source::IncompatibleEnumDeclaration(ref incompatible_enum_declaration_ref) => {
                 return incompatible_enum_declaration_ref.fmt(f);
             }
+            &Source::IncompatibleVectorDeclaration(ref incompatible_vector_declaration_ref) => {
+                return incompatible_vector_declaration_ref.fmt(f);
+            }
             &Source::MissingEnumArgument(ref missing_enum_argument_ref) => {
                 return missing_enum_argument_ref.fmt(f);
             },
@@ -274,6 +292,13 @@ impl Into<Source> for IncompatibleEnumDeclaration {
 impl Into<Source> for IncompatibleStructDeclaration {
     fn into(self) -> Source {
         Source::IncompatibleStructDeclaration(self)
+    }
+}
+
+
+impl Into<Source> for IncompatibleVectorDeclaration {
+    fn into(self) -> Source {
+        Source::IncompatibleVectorDeclaration(self)
     }
 }
 

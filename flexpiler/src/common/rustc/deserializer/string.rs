@@ -35,21 +35,23 @@ impl crate::deserializer::Trait<
         use crate::error::propagation::Trait as PropagationTrait;
         use crate::parser::Parse;
 
-        let parse_string_result = match block::String::parse(reader_mut_ref) {
+        let (string_data, string_finish) = match block::String::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
                     .propagate(context());
                 return crate::deserializer::Result::Err(error);
             },
-            Ok(parser_result) => parser_result,
+            Ok(block::string::Result::NoDataFound { finish }) => {
+                return crate::deserializer::Result::NoDataFound { context: finish.into() };
+            },
+            Ok(block::string::Result::DataFound { data, finish }) => {
+                (data, finish)
+            },
         };
 
-        let context = parse_string_result.finish.into();
-        let data = parse_string_result.string;
-
         return crate::deserializer::Result::DataFound{
-            data,
-            context,
+            data: string_data,
+            context: string_finish.into(),
         };
     }
 }

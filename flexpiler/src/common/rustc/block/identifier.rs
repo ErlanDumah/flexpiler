@@ -3,7 +3,6 @@ use super::constants::*;
 use crate::block;
 use crate::parser::error;
 use crate::reader;
-use crate::error::ExpectedEntries;
 
 
 enum Context {
@@ -18,8 +17,7 @@ enum Context {
     InitialListStart,
     InitialSeparator,
 
-    StringDenominated,
-    StringFreestanding,
+    IdentifierString,
 
     FinishedArgumentEnd,
     FinishedArgumentStart,
@@ -34,7 +32,9 @@ enum Context {
 }
 
 
+#[derive(Clone)]
 pub enum Finish {
+    // Block may be successfully parsed even if the end of data is reached
     NoContext,
 
     ArgumentEnd,
@@ -48,13 +48,14 @@ pub enum Finish {
 }
 
 
+#[derive(Clone)]
 pub enum Result {
     NoDataFound{ finish: Finish },
     DataFound{ data: std::string::String, finish: Finish },
 }
 
 
-pub struct String {
+pub struct Identifier {
     error_source: error::Source,
     context: Context,
     string: std::string::String,
@@ -79,9 +80,44 @@ impl Into<crate::common::rustc::deserializer::Context> for Finish {
 }
 
 
-impl String {
-    pub fn new() -> String {
-        String {
+impl std::fmt::Display for Finish {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            &Finish::NoContext => {
+                write!(f, "NoContext")
+            },
+            &Finish::ArgumentEnd => {
+                write!(f, "ArgumentEnd")
+            },
+            &Finish::ArgumentStart => {
+                write!(f, "ArgumentStart")
+            },
+            &Finish::DataEnd => {
+                write!(f, "DataEnd")
+            },
+            &Finish::DataStart => {
+                write!(f, "DataStart")
+            },
+            &Finish::Freestanding => {
+                write!(f, "Freestanding")
+            },
+            &Finish::ListEnd => {
+                write!(f, "ListEnd")
+            },
+            &Finish::ListStart => {
+                write!(f, "ListStart")
+            },
+            &Finish::Separator => {
+                write!(f, "Separator")
+            },
+        }
+    }
+}
+
+
+impl Identifier {
+    pub fn new() -> Identifier {
+        Identifier {
             error_source: error::Source::NoContent,
             context: Context::Initial,
             string: std::string::String::new(),
@@ -90,23 +126,23 @@ impl String {
 }
 
 
-impl Default for String {
+impl Default for Identifier {
     fn default() -> Self {
-        return String::new();
+        return Self::new();
     }
 }
 
 
-impl block::Trait for String {
+impl block::Trait for Identifier {
     type Result = Result;
 
     fn advance_result(&mut self, read_byte: u8) -> block::AdvanceResult {
-        match (&self.context, read_byte) {
+        return match (&self.context, read_byte) {
             // Accept comments in initial state
             (&Context::Initial,
                 DENOMINATOR_COMMENT) => {
                 self.context = Context::InitialComment;
-                return block::AdvanceResult::Continuous;
+                block::AdvanceResult::Continuous
             },
 
             // Ignore newline, space, tab at initial state
@@ -116,7 +152,7 @@ impl block::Trait for String {
                 DENOMINATOR_SPACE)
             | (&Context::Initial,
                 DENOMINATOR_TAB) => {
-                return block::AdvanceResult::Continuous;
+                block::AdvanceResult::Continuous
             },
 
             // Initial state context denominators
@@ -142,7 +178,7 @@ impl block::Trait for String {
             },
             (&Context::Initial,
                 DENOMINATOR_LIST_END) => {
-                self.context = Context::InitialListStart;
+                self.context = Context::InitialListEnd;
                 block::AdvanceResult::Finished
             },
             (&Context::Initial,
@@ -159,95 +195,77 @@ impl block::Trait for String {
             // On encountering the first non ignorable | comment char
             // Change deserializer to string and add read_byte as first character
             (&Context::Initial,
-                DENOMINATOR_STRING) => {
-                self.context = Context::StringDenominated;
-                return block::AdvanceResult::Continuous;
-            },
-
-            // On encountering regular
-            (&Context::Initial,
-                _) => {
-                self.context = Context::StringFreestanding;
-                self.string.push(read_byte as char);
-                return block::AdvanceResult::Continuous;
-            },
-
-            (&Context::StringDenominated,
-                DENOMINATOR_STRING) => {
-                self.context = Context::FinishedFreestanding;
-                return block::AdvanceResult::Finished;
-            },
-
-            // On encountering regular
-            (&Context::StringDenominated,
                 _) => {
                 self.string.push(read_byte as char);
-                return block::AdvanceResult::Continuous;
+                self.context = Context::IdentifierString;
+                block::AdvanceResult::Continuous
             },
 
-            (&Context::StringFreestanding,
-                DENOMINATOR_NEW_LINE)
-            | (&Context::StringFreestanding,
+            (&Context::IdentifierString,
                 DENOMINATOR_SPACE)
-            | (&Context::StringFreestanding,
+            | (&Context::IdentifierString,
+                DENOMINATOR_NEW_LINE)
+            | (&Context::IdentifierString,
                 DENOMINATOR_TAB) => {
                 self.context = Context::FinishedFreestanding;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
 
-            (&Context::StringFreestanding,
+            // Identifier finished with context denominator
+            (&Context::IdentifierString,
                 DENOMINATOR_ARGUMENT_END) => {
                 self.context = Context::FinishedArgumentEnd;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
-            (&Context::StringFreestanding,
+            (&Context::IdentifierString,
                 DENOMINATOR_ARGUMENT_START) => {
                 self.context = Context::FinishedArgumentStart;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
-            (&Context::StringFreestanding,
+            (&Context::IdentifierString,
                 DENOMINATOR_DATA_END) => {
                 self.context = Context::FinishedDataEnd;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
-            (&Context::StringFreestanding,
+            (&Context::IdentifierString,
                 DENOMINATOR_DATA_START) => {
                 self.context = Context::FinishedDataStart;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
-            (&Context::StringFreestanding,
+            (&Context::IdentifierString,
                 DENOMINATOR_LIST_END) => {
                 self.context = Context::FinishedListEnd;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
-            (&Context::StringFreestanding,
+            (&Context::IdentifierString,
                 DENOMINATOR_LIST_START) => {
                 self.context = Context::FinishedListStart;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
-            (&Context::StringFreestanding,
+            (&Context::IdentifierString,
                 DENOMINATOR_SEPARATOR) => {
                 self.context = Context::FinishedSeparator;
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
 
-            (&Context::StringFreestanding,
+            // On encountering regular
+            (&Context::IdentifierString,
                 _) => {
                 self.string.push(read_byte as char);
-                return block::AdvanceResult::Continuous;
+                block::AdvanceResult::Continuous
             },
 
             // On newline from comment reset deserializer
             (&Context::InitialComment,
                 DENOMINATOR_NEW_LINE) => {
                 self.context = Context::Initial;
-                return block::AdvanceResult::Continuous;
+                block::AdvanceResult::Continuous
             },
 
             // Ignore any other character in a comment
             (&Context::InitialComment,
                 _) => {
-                return block::AdvanceResult::Continuous;
+                block::AdvanceResult::Continuous
             },
 
             (&Context::InitialArgumentEnd, _)
@@ -265,12 +283,12 @@ impl block::Trait for String {
             | (&Context::FinishedListEnd, _)
             | (&Context::FinishedListStart, _)
             | (&Context::FinishedSeparator, _) => {
-                return block::AdvanceResult::Finished;
+                block::AdvanceResult::Finished
             },
 
             (&Context::Error,
                 _) => {
-                return block::AdvanceResult::Error;
+                block::AdvanceResult::Error
             },
         }
     }
@@ -279,7 +297,6 @@ impl block::Trait for String {
         return match self.context {
             Context::Initial
             | Context::InitialComment
-            | Context::StringDenominated
             | Context::Error => {
                 Err(self.error_source)
             },
@@ -320,7 +337,7 @@ impl block::Trait for String {
                 })
             },
 
-            Context::StringFreestanding => {
+            Context::IdentifierString => {
                 Ok(Result::DataFound {
                     data: self.string,
                     finish: Finish::NoContext,

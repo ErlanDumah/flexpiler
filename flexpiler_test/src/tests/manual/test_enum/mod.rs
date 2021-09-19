@@ -51,28 +51,32 @@ impl flexpiler::deserializer::Trait<
         use flexpiler::identity::Trait as IdentityTrait;
         use flexpiler::parser::Parse;
 
-        let declaration_result = match flexpiler::parser::parse::<
-            flexpiler::common::rustc::block::IdentifierWithVariableFinish,
-            ReaderType
-        > (reader_mut_ref) {
+        let (identifier_data, identifier_finish) = match flexpiler::common::rustc::block::Identifier::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = flexpiler::error::Error::gen(parser_error)
                     .propagate(<TestEnum_flexpiler_Deserializer as flexpiler::deserializer::context::Trait<TestEnum, flexpiler::common::rustc::Format>>::context());
                 return flexpiler::deserializer::Result::Err(error);
             },
-            Ok(result) => result,
+            Ok(flexpiler::common::rustc::block::identifier::Result::NoDataFound { finish }) => {
+                return flexpiler::deserializer::Result::NoDataFound {
+                    context: finish.into()
+                };
+            },
+            Ok(flexpiler::common::rustc::block::identifier::Result::DataFound { data, finish }) => {
+                (data, finish)
+            },
         };
 
-        let result = match declaration_result.identifier_string.as_str() {
+        let result = match identifier_data.as_str() {
             "TestEnum::NoData" => {
-                let context: flexpiler::common::rustc::deserializer::Context = declaration_result.finish.into();
+                let context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
                 flexpiler::deserializer::Result::DataFound {
                     data: TestEnum::NoData,
                     context
                 }
             },
             "TestEnum::DataEmpty" => {
-                let context: flexpiler::common::rustc::deserializer::Context = declaration_result.finish.into();
+                let context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
                 match context {
                     flexpiler::common::rustc::deserializer::Context::Freestanding => {
                         match flexpiler::parser::parse::<
@@ -91,7 +95,7 @@ impl flexpiler::deserializer::Trait<
                     },
                     _ => {
                         let incompatible_enum_data_type = flexpiler::common::rustc::error::IncompatibleEnumDataType {
-                            enum_declaration_found: declaration_result.identifier_string,
+                            enum_declaration_found: identifier_data,
                             enum_data_type_expected: flexpiler::common::rustc::error::incompatibleenumdataType::EnumDataType::Argument,
                             context_found: context,
                         };
@@ -116,7 +120,7 @@ impl flexpiler::deserializer::Trait<
                 }
             },
             "TestEnum::DataSimple" => {
-                let context: flexpiler::common::rustc::deserializer::Context = declaration_result.finish.into();
+                let context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
                 match context {
                     flexpiler::common::rustc::deserializer::Context::Freestanding => {
                         match flexpiler::parser::parse::<
@@ -135,7 +139,7 @@ impl flexpiler::deserializer::Trait<
                     },
                     _ => {
                         let incompatible_enum_data_type = flexpiler::common::rustc::error::IncompatibleEnumDataType {
-                            enum_declaration_found: declaration_result.identifier_string,
+                            enum_declaration_found: identifier_data,
                             enum_data_type_expected: flexpiler::common::rustc::error::incompatibleenumdataType::EnumDataType::Argument,
                             context_found: context,
                         };
@@ -149,7 +153,7 @@ impl flexpiler::deserializer::Trait<
                     flexpiler::deserializer::Result::DataFound { data, context } => (data, context),
                     flexpiler::deserializer::Result::NoDataFound { context } => {
                         let missing_enum_argument = flexpiler::common::rustc::error::MissingEnumArgument {
-                            enum_declaration_found: declaration_result.identifier_string,
+                            enum_declaration_found: identifier_data,
                             argument_type_expected: std::string::String::from("String"),
                         };
                         let error = flexpiler::Error::gen(missing_enum_argument)
@@ -188,7 +192,7 @@ impl flexpiler::deserializer::Trait<
                     },
                     _ => {
                         let missing_argument_closure = flexpiler::common::rustc::error::MissingEnumArgumentClosure{
-                            enum_declaration_found: declaration_result.identifier_string,
+                            enum_declaration_found: identifier_data,
                         };
                         let error = flexpiler::Error::gen(missing_argument_closure)
                             .propagate(<TestEnum_flexpiler_Deserializer as flexpiler::deserializer::context::VariantTrait<TestEnum, flexpiler::common::rustc::Format>>::context_variant("DataSimple"));
@@ -205,7 +209,7 @@ impl flexpiler::deserializer::Trait<
                 }
             },
             "TestEnum::DataComplex" => {
-                let context: flexpiler::common::rustc::deserializer::Context = declaration_result.finish.into();
+                let context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
                 match context {
                     flexpiler::common::rustc::deserializer::Context::Freestanding => {
                         match flexpiler::parser::parse::<
@@ -224,7 +228,7 @@ impl flexpiler::deserializer::Trait<
                     },
                     _ => {
                         let incompatible_enum_data_type = flexpiler::common::rustc::error::IncompatibleEnumDataType {
-                            enum_declaration_found: declaration_result.identifier_string,
+                            enum_declaration_found: identifier_data,
                             enum_data_type_expected: flexpiler::common::rustc::error::incompatibleenumdataType::EnumDataType::Complex,
                             context_found: context,
                         };
@@ -386,7 +390,7 @@ impl flexpiler::deserializer::Trait<
 
             _ => {
                 let incompatible_declaration_found = flexpiler::common::rustc::error::IncompatibleEnumDeclaration {
-                    enum_declaration_found: declaration_result.identifier_string,
+                    enum_declaration_found: identifier_data,
                     enum_declaration_expected_entries: flexpiler::error::ExpectedEntries::from(vec![
                         std::string::String::from("TestEnum::NoData"),
                         std::string::String::from("TestEnum::DataEmpty"),

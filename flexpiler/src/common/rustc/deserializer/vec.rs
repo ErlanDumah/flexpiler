@@ -34,29 +34,120 @@ where DataType: crate::Deserialization<crate::common::rustc::Format>
         // Vec::new()
         // vec![ #(element,)* ]
         // [#(element,)*]
-        match block::ContextDenominator::parse(reader_mut_ref) {
+        match block::Identifier::parse(reader_mut_ref) {
             Err(parser_error) => {
                 let error = error::Error::gen(parser_error)
                     .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
                 return crate::deserializer::Result::Err(error);
-            }
-            Ok(result) => {
-                let context: crate::common::rustc::deserializer::Context = result.finish.into();
+            },
+            Ok(block::identifier::Result::NoDataFound { finish }) => {
+                let context: crate::common::rustc::deserializer::Context = finish.into();
                 match &context {
                     crate::common::rustc::deserializer::Context::ListStart => {},
                     _ => {
-                        let unexpected_context = crate::common::rustc::error::UnexpectedContext {
-                            context_found: context,
-                            context_expected: crate::error::ExpectedEntries::from(vec![
-                                crate::common::rustc::deserializer::Context::ListStart
-                            ]),
+                        return crate::deserializer::Result::NoDataFound { context };
+                    }
+                }
+            },
+            Ok(block::identifier::Result::DataFound { data, finish }) => {
+                match data.as_str() {
+                    "vec!" => {
+                        let mut context: crate::common::rustc::deserializer::Context = finish.into();
+                        if context == crate::common::rustc::deserializer::Context::Freestanding {
+                            context = match block::ContextDenominator::parse(reader_mut_ref) {
+                                Ok(result) => {
+                                    result.finish.into()
+                                },
+                                Err(parser_error) => {
+                                    let error = error::Error::gen(parser_error)
+                                        .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
+                                    return crate::deserializer::Result::Err(error);
+                                }
+                            };
+                        }
+                        match &context {
+                            crate::common::rustc::deserializer::Context::ListStart => {},
+                            _ => {
+                                let unexpected_context = crate::common::rustc::error::UnexpectedContext {
+                                    context_found: context,
+                                    context_expected: crate::error::ExpectedEntries::from(vec![
+                                        crate::common::rustc::deserializer::Context::ListStart
+                                    ]),
+                                };
+                                let error = error::Error::gen(unexpected_context)
+                                    .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
+                                return crate::deserializer::Result::Err(error);
+                            }
+                        }
+                    },
+                    "Vec::new"
+                    | "std::vec::Vec::new"=> {
+                        let mut context: crate::common::rustc::deserializer::Context = finish.into();
+                        if context == crate::common::rustc::deserializer::Context::Freestanding {
+                            context = match block::ContextDenominator::parse(reader_mut_ref) {
+                                Ok(result) => {
+                                    result.finish.into()
+                                },
+                                Err(parser_error) => {
+                                    let error = error::Error::gen(parser_error)
+                                        .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
+                                    return crate::deserializer::Result::Err(error);
+                                }
+                            };
+                        }
+                        match context {
+                            crate::common::rustc::deserializer::Context::ArgumentStart => {},
+                            _ => {
+                                let unexpected_context = crate::common::rustc::error::UnexpectedContext {
+                                    context_expected: crate::error::ExpectedEntries::from(vec![
+                                        crate::common::rustc::deserializer::Context::ArgumentStart,
+                                    ]),
+                                    context_found: context,
+                                };
+                                let error = crate::Error::gen(unexpected_context)
+                                    .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
+                                return crate::deserializer::Result::Err(error);
+                            }
                         };
-                        let error = error::Error::gen(unexpected_context)
+                        let context_result = match block::ContextDenominator::parse(reader_mut_ref) {
+                            Ok(result) => result,
+                            Err(parser_error) => {
+                                let error = crate::Error::gen(parser_error)
+                                    .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
+                                return crate::deserializer::Result::Err(error);
+                            }
+                        };
+                        let context: crate::common::rustc::deserializer::Context = context_result.finish.into();
+                        match context {
+                            crate::common::rustc::deserializer::Context::ArgumentEnd => {},
+                            _ => {
+                                let unexpected_context = crate::common::rustc::error::UnexpectedContext {
+                                    context_expected: crate::error::ExpectedEntries::from(vec![
+                                        crate::common::rustc::deserializer::Context::ArgumentStart,
+                                    ]),
+                                    context_found: context,
+                                };
+                                let error = crate::Error::gen(unexpected_context)
+                                    .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
+                                return crate::deserializer::Result::Err(error);
+                            }
+                        }
+
+                        return crate::deserializer::Result::DataFound {
+                            data: std::vec::Vec::new(),
+                            context: crate::common::rustc::deserializer::Context::Freestanding,
+                        };
+                    },
+                    _ => {
+                        let incompatible_vector_declaration = crate::common::rustc::error::IncompatibleVectorDeclaration {
+                            vector_declaration_found: data,
+                        };
+                        let error = crate::Error::gen(incompatible_vector_declaration)
                             .propagate(<Vec as crate::deserializer::context::Trait<std::vec::Vec<DataType>, crate::common::rustc::Format>>::context());
                         return crate::deserializer::Result::Err(error);
                     }
                 }
-            }
+            },
         }
 
         let mut data_vec = std::vec::Vec::new();

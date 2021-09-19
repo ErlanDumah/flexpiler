@@ -69,35 +69,53 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                     use flexpiler::identity::Trait;
                     use flexpiler::parser::Parse;
 
-                    let struct_declaration_string = match flexpiler::common::rustc::block::IdentifierWithDataStartFinish::parse(reader_mut_ref) {
+                    let (identifier_data, identifier_finish) = match flexpiler::common::rustc::block::Identifier::parse(reader_mut_ref) {
+                        Ok(flexpiler::common::rustc::block::identifier::Result::NoDataFound { finish }) => {
+                            return flexpiler::deserializer::Result::NoDataFound {
+                                context: finish.into()
+                            };
+                        },
+                        Ok(flexpiler::common::rustc::block::identifier::Result::DataFound { data, finish }) => {
+                            (data, finish)
+                        },
                         Err(parser_error) => {
                             let error = flexpiler::Error::gen(parser_error)
                                 .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
                             return flexpiler::deserializer::Result::Err(error);
-                        },
-                        Ok(flexpiler::common::rustc::block::identifier_with_data_start_finish::Result::DataStartFinish(declaration)) => {
-                            declaration
-                        },
-                        Ok(flexpiler::common::rustc::block::identifier_with_data_start_finish::Result::Freestanding(declaration)) => {
-                            match flexpiler::common::rustc::block::DataStart::parse(reader_mut_ref) {
-                                Err(parser_error) => {
-                                    let error = flexpiler::Error::gen(parser_error)
-                                        .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
-                                    return flexpiler::deserializer::Result::Err(error);
-                                },
-                                Ok(_) => {
-                                    // successfully parsed data start
-                                },
-                            }
-
-                            declaration
-                        },
+                        }
                     };
+                    let mut context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
+                    if context == flexpiler::common::rustc::deserializer::Context::Freestanding {
+                        context = match flexpiler::common::rustc::block::ContextDenominator::parse(reader_mut_ref) {
+                            Ok(result) => {
+                                result.finish.into()
+                            },
+                            Err(parser_error) => {
+                                let error = flexpiler::Error::gen(parser_error)
+                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                return flexpiler::deserializer::Result::Err(error);
+                            },
+                        }
+                    }
+                    match context {
+                        flexpiler::common::rustc::deserializer::Context::DataStart => {},
+                        _ => {
+                            let unexpected_context = flexpiler::common::rustc::error::UnexpectedContext {
+                                context_found: context,
+                                context_expected: flexpiler::error::ExpectedEntries::from(vec![
+                                    flexpiler::common::rustc::deserializer::Context::DataStart,
+                                ]),
+                            };
+                            let error = flexpiler::Error::gen(unexpected_context)
+                                .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                            return flexpiler::deserializer::Result::Err(error);
+                        },
+                    }
 
-                    if struct_declaration_string.as_str() != #struct_intermediary_ident_string_ref {
+                    if identifier_data.as_str() != #struct_intermediary_ident_string_ref {
                         let incompatible_struct_declaration = flexpiler::common::rustc::error::IncompatibleStructDeclaration {
                             struct_declaration_expected: String::from(#struct_intermediary_ident_string_ref),
-                            struct_declaration_found: struct_declaration_string,
+                            struct_declaration_found: identifier_data,
                         };
                         let error = flexpiler::Error::gen(incompatible_struct_declaration)
                             .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
@@ -266,7 +284,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
 
                 vec.push(quote!{
                     #variant_standalone_full_ident_string_ref => {
-                        let context: flexpiler::common::rustc::deserializer::Context = declaration_result.finish.into();
+                        let context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
                         flexpiler::deserializer::Result::DataFound {
                             data: #variant_standalone_full_ident_ref,
                             context
@@ -291,7 +309,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
 
                 vec.push(quote!{
                     #variant_argumented_full_ident_string_ref => {
-                        let context: flexpiler::common::rustc::deserializer::Context = declaration_result.finish.into();
+                        let context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
                         match context {
                             flexpiler::common::rustc::deserializer::Context::Freestanding => {
                                 match flexpiler::parser::parse::<
@@ -310,7 +328,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                             },
                             _ => {
                                 let incompatible_enum_data_type = flexpiler::common::rustc::error::IncompatibleEnumDataType {
-                                    enum_declaration_found: declaration_result.identifier_string,
+                                    enum_declaration_found: identifier_data,
                                     enum_data_type_expected: flexpiler::common::rustc::error::incompatibleenumdataType::EnumDataType::Argument,
                                     context_found: context,
                                 };
@@ -342,7 +360,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
 
                 vec.push(quote!{
                     #variant_complex_full_ident_string_ref => {
-                        let context: flexpiler::common::rustc::deserializer::Context = declaration_result.finish.into();
+                        let context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
                         match context {
                             flexpiler::common::rustc::deserializer::Context::Freestanding => {
                                 match flexpiler::parser::parse::<
@@ -361,7 +379,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                             },
                             _ => {
                                 let incompatible_enum_data_type = flexpiler::common::rustc::error::IncompatibleEnumDataType {
-                                    enum_declaration_found: declaration_result.identifier_string,
+                                    enum_declaration_found: identifier_data,
                                     enum_data_type_expected: flexpiler::common::rustc::error::incompatibleenumdataType::EnumDataType::Complex,
                                     context_found: context,
                                 };
@@ -392,16 +410,23 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                     use flexpiler::error::propagation::Trait as ErrorPropagationTrait;
                     use flexpiler::parser::Parse;
 
-                    let declaration_result = match flexpiler::common::rustc::block::IdentifierWithVariableFinish::parse(reader_mut_ref) {
+                    let (identifier_data, identifier_finish) = match flexpiler::common::rustc::block::Identifier::parse(reader_mut_ref) {
                         Err(parser_error) => {
-                            let error = flexpiler::Error::gen(parser_error)
+                            let error = flexpiler::error::Error::gen(parser_error)
                                 .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
                             return flexpiler::deserializer::Result::Err(error);
                         },
-                        Ok(result) => result,
+                        Ok(flexpiler::common::rustc::block::identifier::Result::NoDataFound { finish }) => {
+                            return flexpiler::deserializer::Result::NoDataFound {
+                                context: finish.into()
+                            };
+                        },
+                        Ok(flexpiler::common::rustc::block::identifier::Result::DataFound { data, finish }) => {
+                            (data, finish)
+                        },
                     };
 
-                    let result = match declaration_result.identifier_string.as_str() {
+                    let result = match identifier_data.as_str() {
                         #(#enum_variant_standalone_deserialization_code_vec
                         )*
                         #(#enum_variant_argumented_deserialization_code_vec
@@ -411,7 +436,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
 
                         _ => {
                             let incompatible_enum_declaration = flexpiler::common::rustc::error::IncompatibleEnumDeclaration {
-                                enum_declaration_found: declaration_result.identifier_string,
+                                enum_declaration_found: identifier_data,
                                 enum_declaration_expected_entries: flexpiler::error::ExpectedEntries::from(vec![
                                     #(std::string::String::from(#enum_variant_ident_string_ref_vec),)*
                                 ]),

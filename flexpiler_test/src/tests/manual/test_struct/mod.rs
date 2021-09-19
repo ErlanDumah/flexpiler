@@ -132,41 +132,53 @@ impl flexpiler::deserializer::Trait<
 
         let mut deserializer = TestStructFlexpilerDeserializer::default();
 
-        let struct_declaration_string = match flexpiler::parser::parse::<
-            flexpiler::common::rustc::block::IdentifierWithDataStartFinish,
-            ReaderType
-        > (reader_mut_ref) {
+        let (identifier_data, identifier_finish) = match flexpiler::common::rustc::block::Identifier::parse(reader_mut_ref) {
+            Ok(flexpiler::common::rustc::block::identifier::Result::NoDataFound { finish }) => {
+                return flexpiler::deserializer::Result::NoDataFound {
+                    context: finish.into()
+                };
+            },
+            Ok(flexpiler::common::rustc::block::identifier::Result::DataFound { data, finish }) => {
+                (data, finish)
+            },
             Err(parser_error) => {
                 let error = flexpiler::Error::gen(parser_error)
                     .propagate(<TestStructFlexpilerDeserializer as flexpiler::deserializer::context::Trait<TestStruct, flexpiler::common::rustc::Format>>::context());
                 return flexpiler::deserializer::Result::Err(error);
-            },
-            Ok(flexpiler::common::rustc::block::identifier_with_data_start_finish::Result::DataStartFinish(declaration)) => {
-                declaration
-            },
-            Ok(flexpiler::common::rustc::block::identifier_with_data_start_finish::Result::Freestanding(declaration)) => {
-                match flexpiler::parser::parse::<
-                    flexpiler::common::rustc::block::data_start::DataStart,
-                    ReaderType
-                > (reader_mut_ref) {
-                    Err(parser_error) => {
-                        let error = flexpiler::Error::gen(parser_error)
-                            .propagate(<TestStructFlexpilerDeserializer as flexpiler::deserializer::context::Trait<TestStruct, flexpiler::common::rustc::Format>>::context());
-                        return flexpiler::deserializer::Result::Err(error);
-                    },
-                    Ok(_) => {
-                        // successfully parsed data start
-                    },
-                }
-
-                declaration
-            },
+            }
         };
+        let mut context: flexpiler::common::rustc::deserializer::Context = identifier_finish.into();
+        if context == flexpiler::common::rustc::deserializer::Context::Freestanding {
+            context = match flexpiler::common::rustc::block::ContextDenominator::parse(reader_mut_ref) {
+                Ok(result) => {
+                    result.finish.into()
+                },
+                Err(parser_error) => {
+                    let error = flexpiler::Error::gen(parser_error)
+                        .propagate(<TestStructFlexpilerDeserializer as flexpiler::deserializer::context::Trait<TestStruct, flexpiler::common::rustc::Format>>::context());
+                    return flexpiler::deserializer::Result::Err(error);
+                },
+            }
+        }
+        match context {
+            flexpiler::common::rustc::deserializer::Context::DataStart => {},
+            _ => {
+                let unexpected_context = flexpiler::common::rustc::error::UnexpectedContext {
+                    context_found: context,
+                    context_expected: flexpiler::error::ExpectedEntries::from(vec![
+                        flexpiler::common::rustc::deserializer::Context::DataStart,
+                    ]),
+                };
+                let error = flexpiler::Error::gen(unexpected_context)
+                    .propagate(<TestStructFlexpilerDeserializer as flexpiler::deserializer::context::Trait<TestStruct, flexpiler::common::rustc::Format>>::context());
+                return flexpiler::deserializer::Result::Err(error);
+            },
+        }
 
-        if struct_declaration_string.as_str() != "TestStruct" {
+        if identifier_data.as_str() != "TestStruct" {
             let incompatible_struct_declaration = flexpiler::common::rustc::error::IncompatibleStructDeclaration {
                 struct_declaration_expected: String::from("TestStruct"),
-                struct_declaration_found: struct_declaration_string,
+                struct_declaration_found: identifier_data,
             };
             let error = flexpiler::Error::gen(incompatible_struct_declaration)
                 .propagate(TestStructFlexpilerDeserializer::context());
