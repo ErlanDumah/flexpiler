@@ -14,7 +14,7 @@ pub struct DeserializerTraitImpl;
 pub struct ParameterStruct<'a> {
     pub struct_definition_ref: &'a definition::Struct,
     pub struct_intermediary_ref: &'a intermediary::Struct<'a>,
-    pub struct_data_context_intermediary_ref: &'a intermediary::DataContext,
+    pub struct_data_context_intermediary_ref: &'a intermediary::DataContext<'a>,
     pub struct_deserializer_intermediary_ref: &'a intermediary::deserializer::Struct,
 }
 
@@ -22,42 +22,37 @@ pub struct ParameterStruct<'a> {
 pub struct ParameterEnum<'a> {
     pub enum_definition_ref: &'a definition::Enum,
     pub enum_intermediary_ref: &'a intermediary::Enum<'a>,
-    pub enum_variable_complex_data_context_intermediary_vec_ref: &'a Vec<intermediary::DataContext>,
+    pub enum_variable_complex_data_context_intermediary_vec_ref: &'a Vec<intermediary::DataContext<'a>>,
     pub enum_deserializer_intermediary_ref: &'a intermediary::deserializer::Enum,
 }
 
 
 impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
     fn gen(parameter: ParameterStruct) -> proc_macro2::TokenStream {
-        let generics = if !parameter.struct_definition_ref.data_struct.fields.is_empty() {
-            let mut generic_vec = Vec::new();
-            for type_ref in parameter.struct_intermediary_ref.field_type_vec.iter() {
-                generic_vec.push(quote!{ #type_ref: flexpiler::Deserialization<flexpiler::common::rustc::Format>, });
-            }
-            quote!{
-                where #(#generic_vec)*
-            }
-        } else {
-            quote!{}
-        };
+        let generics_where = implementation::GenericsWhere::gen(implementation::generics_where::ParameterStruct{
+            definition_struct_ref: parameter.struct_definition_ref,
+            intermediary_struct_ref: parameter.struct_intermediary_ref,
+        });
 
         let struct_definition_ident_ref = &parameter.struct_definition_ref.ident;
+        let struct_definition_generics_ref = &parameter.struct_definition_ref.generics;
         let struct_intermediary_ident_string_ref = &parameter.struct_intermediary_ref.ident_string;
         let struct_intermediary_field_string_vec_ref = &parameter.struct_intermediary_ref.field_string_vec;
         let struct_intermediary_field_type_vec_ref = &parameter.struct_intermediary_ref.field_type_vec;
         let struct_deserializer_intermediary_ident_ref = &parameter.struct_deserializer_intermediary_ref.ident;
         let struct_data_context_intermediary_ident_ref = &parameter.struct_data_context_intermediary_ref.ident;
+        let struct_data_context_intermediary_generics_ref = parameter.struct_data_context_intermediary_ref.generics_ref;
         let struct_data_context_intermediary_field_ident_vec_ref = &parameter.struct_data_context_intermediary_ref.field_ident_vec;
 
         quote!{
-            impl flexpiler::deserializer::Trait<
-                #struct_definition_ident_ref,
+            impl #struct_definition_generics_ref flexpiler::deserializer::Trait<
+                #struct_definition_ident_ref #struct_definition_generics_ref,
                 flexpiler::common::rustc::Format,
             > for #struct_deserializer_intermediary_ident_ref
-            #generics {
+            #generics_where {
                 fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
                     -> flexpiler::deserializer::Result<
-                        #struct_definition_ident_ref,
+                        #struct_definition_ident_ref #struct_definition_generics_ref,
                         flexpiler::common::rustc::deserializer::Context,
                         flexpiler::Error<flexpiler::common::rustc::error::Source>
                     >
@@ -80,7 +75,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                         },
                         Err(parser_error) => {
                             let error = flexpiler::Error::gen(parser_error)
-                                .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                             return flexpiler::deserializer::Result::Err(error);
                         }
                     };
@@ -92,7 +87,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                             },
                             Err(parser_error) => {
                                 let error = flexpiler::Error::gen(parser_error)
-                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                                 return flexpiler::deserializer::Result::Err(error);
                             },
                         }
@@ -107,7 +102,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                                 ]),
                             };
                             let error = flexpiler::Error::gen(unexpected_context)
-                                .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                             return flexpiler::deserializer::Result::Err(error);
                         },
                     }
@@ -118,7 +113,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                             struct_declaration_found: identifier_data,
                         };
                         let error = flexpiler::Error::gen(incompatible_struct_declaration)
-                            .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                            .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                         return flexpiler::deserializer::Result::Err(error);
                     }
 
@@ -128,7 +123,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                         let field_declaration_string = match flexpiler::common::rustc::block::DeclarationOrDataEnd::parse(reader_mut_ref) {
                             Err(parser_error) => {
                                 let error = flexpiler::error::Error::gen(parser_error)
-                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                                 return flexpiler::deserializer::Result::Err(error);
                             },
                             Ok(flexpiler::common::rustc::block::declaration_or_data_end::Result::DataEnd()) => {
@@ -154,11 +149,11 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                                         };
                                         let error_source_common: flexpiler::error::source::Common = unexpected_no_content.into();
                                         let error = flexpiler::Error::gen(error_source_common)
-                                            .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::FieldTrait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context_field(#struct_intermediary_field_string_vec_ref));
+                                            .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::FieldTrait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context_field(#struct_intermediary_field_string_vec_ref));
                                         return flexpiler::deserializer::Result::Err(error);
                                     },
                                     flexpiler::deserializer::Result::Err(error) => {
-                                        let error = error.propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::FieldTrait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context_field(#struct_intermediary_field_string_vec_ref));
+                                        let error = error.propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::FieldTrait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context_field(#struct_intermediary_field_string_vec_ref));
                                         return flexpiler::deserializer::Result::Err(error);
                                     }
                                 }
@@ -175,7 +170,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                                     ]),
                                 };
                                 let error = flexpiler::Error::gen(unrecognized_field)
-                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                                 return flexpiler::deserializer::Result::Err(error);
                             }
                         };
@@ -187,7 +182,7 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                                 },
                                 Err(parser_error) => {
                                     let error = flexpiler::Error::gen(parser_error)
-                                        .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                        .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                                     return flexpiler::deserializer::Result::Err(error);
                                 }
                             }
@@ -210,13 +205,13 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
                                     context_found: context,
                                 };
                                 let error = flexpiler::Error::gen(unexpected_entry_finish_context)
-                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                    .propagate(<#struct_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#struct_definition_ident_ref #struct_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                                 return flexpiler::deserializer::Result::Err(error);
                             }
                         }
                     } // loop
 
-                    return match <#struct_data_context_intermediary_ident_ref as std::convert::TryInto<#struct_definition_ident_ref>>::try_into(struct_context) {
+                    return match <#struct_data_context_intermediary_ident_ref #struct_data_context_intermediary_generics_ref as std::convert::TryInto<#struct_definition_ident_ref #struct_definition_generics_ref>>::try_into(struct_context) {
                         Ok(data) => {
                             flexpiler::deserializer::Result::DataFound {
                                 context: flexpiler::common::rustc::deserializer::Context::Freestanding,
@@ -236,28 +231,13 @@ impl<'a> implementation::Trait<ParameterStruct<'a>> for DeserializerTraitImpl {
 
 impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
     fn gen(parameter: ParameterEnum) -> proc_macro2::TokenStream {
-        let generics = {
-            let mut generic_vec = Vec::new();
-            for variable_argumented_ref in parameter.enum_intermediary_ref.variant_argumented_vec.iter() {
-                for type_ref in variable_argumented_ref.field_type_ref_vec.iter() {
-                    generic_vec.push(quote!{ #type_ref: flexpiler::Deserialization<flexpiler::common::rustc::Format>, });
-                }
-            }
-            for variable_complex_ref in parameter.enum_intermediary_ref.variant_complex_vec.iter() {
-                for type_ref in variable_complex_ref.field_type_ref_vec.iter() {
-                    generic_vec.push(quote!{ #type_ref: flexpiler::Deserialization<flexpiler::common::rustc::Format>, });
-                }
-            }
-            if generic_vec.is_empty() {
-                quote!{}
-            } else {
-                quote!{
-                    where #(#generic_vec)*
-                }
-            }
-        };
+        let generics_where = implementation::GenericsWhere::gen(implementation::generics_where::ParameterEnum{
+            definition_enum_ref: parameter.enum_definition_ref,
+            intermediary_enum_ref: parameter.enum_intermediary_ref,
+        });
 
         let enum_definition_ident_ref = &parameter.enum_definition_ref.ident;
+        let enum_definition_generics_ref = &parameter.enum_definition_ref.generics;
         let enum_intermediary_ident_string_ref = &parameter.enum_intermediary_ref.ident_string;
         let enum_deserializer_intermediary_ident_ref = &parameter.enum_deserializer_intermediary_ref.ident;
         let enum_variant_ident_string_ref_vec = {
@@ -319,7 +299,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                                     Ok(result) => {},
                                     Err(parser_error) => {
                                         let error = flexpiler::Error::gen(parser_error)
-                                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_argumented_ident_string_ref));
+                                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_argumented_ident_string_ref));
                                         return flexpiler::deserializer::Result::Err(error);
                                     },
                                 }
@@ -333,7 +313,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                                     context_found: context,
                                 };
                                 let error = flexpiler::Error::gen(incompatible_enum_data_type)
-                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_argumented_ident_string_ref));
+                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_argumented_ident_string_ref));
                                 return flexpiler::deserializer::Result::Err(error);
                             }
                         }
@@ -370,7 +350,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                                     Ok(result) => {},
                                     Err(parser_error) => {
                                         let error = flexpiler::error::Error::gen(parser_error)
-                                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_complex_full_ident_string_ref));
+                                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_complex_full_ident_string_ref));
                                         return flexpiler::deserializer::Result::Err(error);
                                     },
                                 }
@@ -384,7 +364,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                                     context_found: context,
                                 };
                                 let error = flexpiler::Error::gen(incompatible_enum_data_type)
-                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_complex_full_ident_string_ref));
+                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variant_complex_full_ident_string_ref));
                                 return flexpiler::deserializer::Result::Err(error);
                             }
                         }
@@ -397,10 +377,10 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
         };
 
         quote!{
-            impl flexpiler::deserializer::Trait<#enum_definition_ident_ref, flexpiler::common::rustc::Format> for #enum_deserializer_intermediary_ident_ref
-            #generics {
+            impl #enum_definition_generics_ref flexpiler::deserializer::Trait<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::Format> for #enum_deserializer_intermediary_ident_ref
+            #generics_where {
                 fn deserialize<ReaderType>(reader_mut_ref: &mut ReaderType)
-                    -> flexpiler::deserializer::Result<#enum_definition_ident_ref, flexpiler::common::rustc::deserializer::Context, flexpiler::Error<flexpiler::common::rustc::error::Source>>
+                    -> flexpiler::deserializer::Result<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::deserializer::Context, flexpiler::Error<flexpiler::common::rustc::error::Source>>
                 where ReaderType: flexpiler::reader::Trait {
                     use std::convert::TryInto;
                     use flexpiler::Deserialization;
@@ -413,7 +393,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                     let (identifier_data, identifier_finish) = match flexpiler::common::rustc::block::Identifier::parse(reader_mut_ref) {
                         Err(parser_error) => {
                             let error = flexpiler::error::Error::gen(parser_error)
-                                .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                             return flexpiler::deserializer::Result::Err(error);
                         },
                         Ok(flexpiler::common::rustc::block::identifier::Result::NoDataFound { finish }) => {
@@ -442,7 +422,7 @@ impl<'a> implementation::Trait<ParameterEnum<'a>> for DeserializerTraitImpl {
                                 ]),
                             };
                             let error = flexpiler::Error::gen(incompatible_enum_declaration)
-                                .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#enum_definition_ident_ref, flexpiler::common::rustc::Format>>::context());
+                                .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::Trait<#enum_definition_ident_ref #enum_definition_generics_ref, flexpiler::common::rustc::Format>>::context());
                             return flexpiler::deserializer::Result::Err(error);
                         }
                     };

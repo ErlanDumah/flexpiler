@@ -2,8 +2,9 @@ use crate::core::definition;
 use crate::core::intermediary;
 use crate::core::error;
 
-pub struct DataContext {
+pub struct DataContext<'a> {
     pub ident: syn::Ident,
+    pub generics_ref: &'a syn::Generics,
     pub field_ident_vec: Vec<syn::Ident>,
     pub field_type_vec: Vec<proc_macro2::TokenStream>,
 }
@@ -16,7 +17,7 @@ pub struct ParameterEnumVariantComplex<'definition, 'intermediary> {
 }
 
 
-impl<'a> std::convert::TryFrom<&'a definition::Struct> for DataContext {
+impl<'a> std::convert::TryFrom<&'a definition::Struct> for DataContext<'a> {
     type Error = error::Error<'a>;
 
     fn try_from(struct_definition_ref: &'a definition::Struct) -> std::result::Result<Self, Self::Error> {
@@ -41,6 +42,7 @@ impl<'a> std::convert::TryFrom<&'a definition::Struct> for DataContext {
 
         Ok(DataContext {
             ident: format_ident!("{}flexpilerContext", struct_definition_ref.ident),
+            generics_ref: &struct_definition_ref.generics,
             field_ident_vec,
             field_type_vec,
         })
@@ -49,7 +51,7 @@ impl<'a> std::convert::TryFrom<&'a definition::Struct> for DataContext {
 
 
 // Compiler needs to know that the Error returned by this lives longer than 'intermediary, namely 'definition.
-impl<'definition, 'intermediary> std::convert::TryFrom<ParameterEnumVariantComplex<'definition, 'intermediary>> for DataContext {
+impl<'definition, 'intermediary> std::convert::TryFrom<ParameterEnumVariantComplex<'definition, 'intermediary>> for DataContext<'definition> {
     type Error = error::Error<'definition>;
 
     fn try_from(parameter: ParameterEnumVariantComplex<'definition, 'intermediary>) -> std::result::Result<Self, Self::Error> {
@@ -69,6 +71,7 @@ impl<'definition, 'intermediary> std::convert::TryFrom<ParameterEnumVariantCompl
                 parameter.enum_definition_ref.ident,
                 parameter.variant_complex_enum_intermediary_ref.ident_ref
             ),
+            generics_ref: &parameter.enum_definition_ref.generics,
             field_ident_vec,
             field_type_vec,
         })

@@ -15,6 +15,7 @@ pub struct ParameterEnumVariableArgumented<'a> {
 
 impl DataArgumentedDeserialization {
     fn gen_separator_catch(enum_ident_ref: &syn::Ident,
+                           enum_generics_ref: &syn::Generics,
                            data_ident_string_ref: &std::string::String,
                            deserializer_ident_ref: &syn::Ident,
                            argument_context_ident_ref: &syn::Ident)
@@ -28,7 +29,7 @@ impl DataArgumentedDeserialization {
                         Ok(result) => {},
                         Err(parser_error) => {
                             let error = flexpiler::error::Error::gen(parser_error)
-                                .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                                .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                             return flexpiler::deserializer::Result::Err(error);
                         },
                     }
@@ -38,14 +39,15 @@ impl DataArgumentedDeserialization {
                         enum_declaration_found: identifier_data,
                     };
                     let error = flexpiler::Error::gen(missing_argument_closure)
-                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                     return flexpiler::deserializer::Result::Err(error);
                 },
             }
         }
     }
 
-    fn gen_separator_or_argumentend_catch(enum_ident_ref: &syn::Ident,
+    fn gen_separator_or_argumentend_catch(enum_ident_ref: &syn::Ident, 
+                                          enum_generics_ref: &syn::Generics,
                                           data_ident_string_ref: &std::string::String,
                                           deserializer_ident_ref: &syn::Ident,
                                           argument_context_ident_ref: &syn::Ident)
@@ -59,7 +61,7 @@ impl DataArgumentedDeserialization {
                         Ok(_) => {},
                         Err(parser_error) => {
                             let error = flexpiler::error::Error::gen(parser_error)
-                                .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                                .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                             return flexpiler::deserializer::Result::Err(error);
                         },
                     }
@@ -72,14 +74,14 @@ impl DataArgumentedDeserialization {
                                 Ok(_) => {},
                                 Err(parser_error) => {
                                     let error = flexpiler::error::Error::gen(parser_error)
-                                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                                     return flexpiler::deserializer::Result::Err(error);
                                 }
                             }
                         },
                         Err(parser_error) => {
                             let error = flexpiler::error::Error::gen(parser_error)
-                                .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                                .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                             return flexpiler::deserializer::Result::Err(error);
                         },
                     }
@@ -89,7 +91,7 @@ impl DataArgumentedDeserialization {
                         enum_declaration_found: identifier_data,
                     };
                     let error = flexpiler::Error::gen(missing_argument_closure)
-                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                     return flexpiler::deserializer::Result::Err(error);
                 },
             }
@@ -103,6 +105,7 @@ impl DataArgumentedDeserialization {
         -> proc_macro2::TokenStream
     {
         let enum_ident_ref = &parameter_ref.enum_definition_ref.ident;
+        let enum_generics_ref = &parameter_ref.enum_definition_ref.generics;
         let data_ident_string_ref = &parameter_ref.variant_argumented_intermediary_ref.ident_string;
         let deserializer_ident_ref = &parameter_ref.enum_deserializer_intermediary_ref.ident;
 
@@ -116,12 +119,12 @@ impl DataArgumentedDeserialization {
                         argument_type_expected: <#field_type_ref as flexpiler::identity::Trait>::definition(),
                     };
                     let error = flexpiler::Error::gen(missing_enum_argument)
-                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                     return flexpiler::deserializer::Result::Err(error);
                 },
                 flexpiler::deserializer::Result::Err(error) => {
                     let error = error
-                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
+                        .propagate(<#deserializer_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#data_ident_string_ref));
                     return flexpiler::deserializer::Result::Err(error);
                 }
             };
@@ -133,6 +136,7 @@ impl DataArgumentedDeserialization {
 impl<'a> implementation::Trait<ParameterEnumVariableArgumented<'a>> for DataArgumentedDeserialization {
     fn gen(parameter: ParameterEnumVariableArgumented<'a>) -> proc_macro2::TokenStream {
         let enum_ident_ref = &parameter.enum_definition_ref.ident;
+        let enum_generics_ref = &parameter.enum_definition_ref.generics;
         let variable_argumented_intermediary_full_ident_tokenstream_ref = &parameter.variant_argumented_intermediary_ref.full_ident_tokenstream;
         let variable_argumented_intermediary_full_ident_string_ref = &parameter.variant_argumented_intermediary_ref.full_ident_string;
         let variable_argumented_intermediary_field_type_ref_vec_ref = &parameter.variant_argumented_intermediary_ref.field_type_ref_vec;
@@ -182,6 +186,7 @@ impl<'a> implementation::Trait<ParameterEnumVariableArgumented<'a>> for DataArgu
                 let catch_code = if element_option.is_none() {
                     Self::gen_separator_or_argumentend_catch(
                         enum_ident_ref,
+                        enum_generics_ref,
                         &parameter.variant_argumented_intermediary_ref.full_ident_string,
                         &parameter.enum_deserializer_intermediary_ref.ident,
                         &argument_context_ident,
@@ -189,6 +194,7 @@ impl<'a> implementation::Trait<ParameterEnumVariableArgumented<'a>> for DataArgu
                 } else {
                     Self::gen_separator_catch(
                         enum_ident_ref,
+                        enum_generics_ref,
                         &parameter.variant_argumented_intermediary_ref.full_ident_string,
                         &parameter.enum_deserializer_intermediary_ref.ident,
                         &argument_context_ident,
@@ -212,7 +218,7 @@ impl<'a> implementation::Trait<ParameterEnumVariableArgumented<'a>> for DataArgu
                     Ok(result) => {},
                     Err(parser_error) => {
                         let error = flexpiler::error::Error::gen(parser_error)
-                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_argumented_intermediary_full_ident_string_ref));
+                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_argumented_intermediary_full_ident_string_ref));
                         return flexpiler::deserializer::Result::Err(error);
                     }
                 }

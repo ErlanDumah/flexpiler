@@ -4,6 +4,8 @@ pub mod deserializer;
 pub use deserializer::Deserializer;
 pub mod flexpiler;
 pub use self::flexpiler::Flexpiler;
+pub mod generics_where;
+pub use generics_where::GenericsWhere;
 pub mod identity;
 pub mod struct_rustc;
 

@@ -8,7 +8,7 @@ pub struct DataContextDeserialization;
 
 pub struct ParameterEnumVariableComplex<'a> {
     pub enum_definition_ref: &'a definition::Enum,
-    pub data_context_intermediary_ref: &'a intermediary::DataContext,
+    pub data_context_intermediary_ref: &'a intermediary::DataContext<'a>,
     pub variable_complex_intermediary_ref: &'a intermediary::enum_rustc::VariantComplex<'a>,
     pub enum_deserializer_intermediary_ref: &'a intermediary::deserializer::Enum,
 }
@@ -18,7 +18,9 @@ impl<'a> implementation::Trait<ParameterEnumVariableComplex<'a>> for DataContext
     fn gen(parameter: ParameterEnumVariableComplex<'a>) -> proc_macro2::TokenStream {
 
         let enum_ident_ref = &parameter.enum_definition_ref.ident;
+        let enum_generics_ref = &parameter.enum_definition_ref.generics;
         let data_context_intermediary_ident_ref = &parameter.data_context_intermediary_ref.ident;
+        let data_context_intermediary_generics_ref = &parameter.data_context_intermediary_ref.generics_ref;
         let data_context_field_ident_vec_ref = &parameter.data_context_intermediary_ref.field_ident_vec;
         let variable_complex_intermediary_ident_string_ref = &parameter.variable_complex_intermediary_ref.full_ident_string;
         let variable_complex_intermediary_full_ident_string_ref = &parameter.variable_complex_intermediary_ref.full_ident_string;
@@ -34,7 +36,7 @@ impl<'a> implementation::Trait<ParameterEnumVariableComplex<'a>> for DataContext
                 let field_declaration_string = match flexpiler::common::rustc::block::DeclarationOrDataEnd::parse(reader_mut_ref) {
                     Err(parser_error) => {
                         let error = flexpiler::error::Error::gen(parser_error)
-                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
+                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
                         return flexpiler::deserializer::Result::Err(error);
                     },
                     Ok(flexpiler::common::rustc::block::declaration_or_data_end::Result::DataEnd()) => {
@@ -60,12 +62,12 @@ impl<'a> implementation::Trait<ParameterEnumVariableComplex<'a>> for DataContext
                                 };
                                 let error_source_common: flexpiler::error::source::Common = unexpected_no_content.into();
                                 let error = flexpiler::Error::gen(error_source_common)
-                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantFieldTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant_field(#variable_complex_intermediary_full_ident_string_ref, #variable_complex_intermediary_field_ident_string_vec_ref));
+                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantFieldTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant_field(#variable_complex_intermediary_full_ident_string_ref, #variable_complex_intermediary_field_ident_string_vec_ref));
                                 return flexpiler::deserializer::Result::Err(error);
                             },
                             flexpiler::deserializer::Result::Err(deserializer_error) => {
                                 let error = deserializer_error
-                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantFieldTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant_field(#variable_complex_intermediary_full_ident_string_ref, #variable_complex_intermediary_field_ident_string_vec_ref));
+                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantFieldTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant_field(#variable_complex_intermediary_full_ident_string_ref, #variable_complex_intermediary_field_ident_string_vec_ref));
                                 return flexpiler::deserializer::Result::Err(error);
                             },
                         }
@@ -82,7 +84,7 @@ impl<'a> implementation::Trait<ParameterEnumVariableComplex<'a>> for DataContext
                             ]),
                         };
                         let error = flexpiler::Error::gen(unrecognized_field)
-                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
+                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
                         return flexpiler::deserializer::Result::Err(error);
                     }
                 };
@@ -98,7 +100,7 @@ impl<'a> implementation::Trait<ParameterEnumVariableComplex<'a>> for DataContext
                             },
                             Err(parser_error) => {
                                 let error = flexpiler::error::Error::gen(parser_error)
-                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
+                                    .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
                                 return flexpiler::deserializer::Result::Err(error);
                             },
                         }
@@ -120,13 +122,13 @@ impl<'a> implementation::Trait<ParameterEnumVariableComplex<'a>> for DataContext
                         };
 
                         let error = flexpiler::Error::gen(unexpected_entry_finish_context)
-                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
+                            .propagate(<#enum_deserializer_intermediary_ident_ref as flexpiler::deserializer::context::VariantTrait<#enum_ident_ref #enum_generics_ref, flexpiler::common::rustc::Format>>::context_variant(#variable_complex_intermediary_ident_string_ref));
                         return flexpiler::deserializer::Result::Err(error);
                     }
                 }
             } // loop
 
-            match data_context.try_into() {
+            match <#data_context_intermediary_ident_ref #data_context_intermediary_generics_ref as std::convert::TryInto<#enum_ident_ref #enum_generics_ref>>::try_into(data_context) {
                 Ok(data) => {
                     flexpiler::deserializer::Result::DataFound {
                         context: flexpiler::common::rustc::deserializer::Context::Freestanding,
