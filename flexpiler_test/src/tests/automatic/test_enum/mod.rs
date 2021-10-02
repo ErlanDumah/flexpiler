@@ -1,3 +1,4 @@
+mod generics;
 mod subclass;
 mod vec;
 
